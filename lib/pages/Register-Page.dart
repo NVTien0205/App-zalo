@@ -45,7 +45,7 @@ class RegisterPage extends StatelessWidget {
         email: email,
         fullname: "",
         profilepicture: "",
-        friendList: "",
+        friendList: [],
       );
       await FirebaseFirestore.instance
           .collection("users")
