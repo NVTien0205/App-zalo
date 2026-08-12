@@ -1,18 +1,20 @@
 // ignore_for_file: file_names, avoid_print
 
-import "dart:io";
+import "dart:typed_data";
+import "package:flutter/foundation.dart" show kIsWeb;
 
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:firebase_auth/firebase_auth.dart";
 import "package:firebase_storage/firebase_storage.dart";
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
-import "package:image_cropper/image_cropper.dart";
 import "package:image_picker/image_picker.dart";
 import "package:chat_app/components/NameTextField.dart";
 import "package:chat_app/models/userModel.dart";
 import "package:chat_app/pages/Main-Page.dart";
 
+const String defaultProfilePictureUrl =
+    "https://firebasestorage.googleapis.com/v0/b/YOUR_PROJECT/o/defaults%2Fdefault_avatar.png?alt=media";
 // ignore: must_be_immutable
 class ConfirmAccount extends StatefulWidget {
   final UserModel userModel;
@@ -27,7 +29,8 @@ class ConfirmAccount extends StatefulWidget {
 
 class _ConfirmAccountState extends State<ConfirmAccount> {
   late TextEditingController fullNameController;
-  File? imageFile;
+  XFile? imageFile;
+  Uint8List? imageBytes;
 
   @override
   void initState() {
@@ -43,23 +46,11 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
 
   void selectImage(ImageSource source) async {
     XFile? pickedFile = await ImagePicker().pickImage(source: source);
-
     if (pickedFile != null) {
-      cropImage(pickedFile);
-    }
-  }
-
-  void cropImage(XFile file) async {
-    ImageCropper imageCropper = ImageCropper();
-    CroppedFile? croppedImage = (await imageCropper.cropImage(
-      sourcePath: file.path,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-      compressQuality: 20,
-    ));
-
-    if (croppedImage != null) {
+      final bytes = await pickedFile.readAsBytes();
       setState(() {
-        imageFile = File(croppedImage.path);
+        imageFile = pickedFile;
+        imageBytes = bytes;
       });
     }
   }
@@ -96,7 +87,7 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
 
   void checkValues() {
     String fullname = fullNameController.text.trim();
-    if (fullname == "" || imageFile == null) {
+    if (fullname == "") {
       print("Làm ơn hãy điền đầy đủ thông tin!");
     } else {
       print("Đang cập nhật");
@@ -105,14 +96,28 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
   }
 
   void uploadData() async {
-    UploadTask uploadTask = FirebaseStorage.instance
-        .ref("profilepictures")
-        .child(widget.userModel.uid.toString())
-        .putFile(imageFile!);
+    String imageUrl;
+    if (imageFile != null) {
+      UploadTask uploadTask;
+      if (kIsWeb && imageBytes != null) {
+        uploadTask = FirebaseStorage.instance
+            .ref("profilepictures")
+            .child(widget.userModel.uid.toString())
+            .putData(imageBytes!);
+      } else {
+        final bytes = await imageFile!.readAsBytes();
+        uploadTask = FirebaseStorage.instance
+            .ref("profilepictures")
+            .child(widget.userModel.uid.toString())
+            .putData(bytes);
+      }
 
-    TaskSnapshot snapshot = await uploadTask;
+      TaskSnapshot snapshot = await uploadTask;
 
-    String imageUrl = await snapshot.ref.getDownloadURL();
+      imageUrl = await snapshot.ref.getDownloadURL();
+    } else {
+      imageUrl = defaultProfilePictureUrl;
+    }
     String fullname = fullNameController.text.trim();
 
     widget.userModel.fullname = fullname;
@@ -170,7 +175,7 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
                   },
                   child: CircleAvatar(
                     backgroundImage:
-                        (imageFile != null) ? FileImage(imageFile!) : null,
+                        (imageFile != null) ? MemoryImage(imageBytes!) : null,
                     radius: 60,
                     child: (imageFile == null)
                         ? const Icon(
