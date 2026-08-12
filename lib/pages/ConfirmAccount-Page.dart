@@ -17,7 +17,6 @@ import "package:chat_app/pages/Main-Page.dart";
 class ConfirmAccount extends StatefulWidget {
   final UserModel userModel;
   final User firebaseUser;
-  TextEditingController fullNameController = TextEditingController();
 
   ConfirmAccount(
       {Key? key, required this.userModel, required this.firebaseUser})
@@ -27,7 +26,20 @@ class ConfirmAccount extends StatefulWidget {
 }
 
 class _ConfirmAccountState extends State<ConfirmAccount> {
+  late TextEditingController fullNameController;
   File? imageFile;
+
+  @override
+  void initState() {
+    super.initState();
+    fullNameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    fullNameController.dispose();
+    super.dispose();
+  }
 
   void selectImage(ImageSource source) async {
     XFile? pickedFile = await ImagePicker().pickImage(source: source);
@@ -83,7 +95,7 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
   }
 
   void checkValues() {
-    String fullname = widget.fullNameController.text.trim();
+    String fullname = fullNameController.text.trim();
     if (fullname == "" || imageFile == null) {
       print("Làm ơn hãy điền đầy đủ thông tin!");
     } else {
@@ -101,7 +113,7 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
     TaskSnapshot snapshot = await uploadTask;
 
     String imageUrl = await snapshot.ref.getDownloadURL();
-    String fullname = widget.fullNameController.text.trim();
+    String fullname = fullNameController.text.trim();
 
     widget.userModel.fullname = fullname;
     widget.userModel.profilepicture = imageUrl;
@@ -169,7 +181,7 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
                   ),
                 ),
                 MyNameTextField(
-                  controller: widget.fullNameController,
+                  controller: fullNameController,
                   name: "Họ và tên",
                 ),
                 const SizedBox(
