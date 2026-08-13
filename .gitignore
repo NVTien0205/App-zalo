@@ -86,3 +86,12 @@ docker-output/
 # Android/CMake build artifacts
 **/.cxx/
 android/app/.cxx/
+
+
+cat >> .gitignore << 'EOF'
+
+# Dev-only lint configs — không phải config chính thức của team, không commit
+analysis_options_dev.yaml
+analysis_options_migrate.yaml
+analysis_options.yaml.bak
+EOF
