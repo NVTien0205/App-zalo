@@ -49,25 +49,25 @@ class RegisterPage extends StatelessWidget {
           .createUserWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (ex) {
       String message;
-        switch (ex.code) {
-          case "email-already-in-use":
-            message = "Email này đã được sử dụng để đăng ký!";
-            break;
-          case "weak-password":
-            message = "Mật khẩu quá yếu, vui lòng chọn mật khẩu khác!";
-            break;
-          case "invalid-email":
-            message = "Email không hợp lệ!";
-            break;
-          case "network-request-failed":
-            message = "Lỗi kết nối mạng, vui lòng thử lại!";
-            break;
-          default:
-            message = "Đăng ký thất bại, vui lòng thử lại sau!";
-        }
-        _showSnack(context, message);
-      }     
-    
+      switch (ex.code) {
+        case "email-already-in-use":
+          message = "Email này đã được sử dụng để đăng ký!";
+          break;
+        case "weak-password":
+          message = "Mật khẩu quá yếu, vui lòng chọn mật khẩu khác!";
+          break;
+        case "invalid-email":
+          message = "Email không hợp lệ!";
+          break;
+        case "network-request-failed":
+          message = "Lỗi kết nối mạng, vui lòng thử lại!";
+          break;
+        default:
+          message = "Đăng ký thất bại, vui lòng thử lại sau!";
+      }
+      _showSnack(context, message);
+    }
+
     if (credential != null) {
       String uid = credential.user!.uid;
       UserModel newUser = UserModel(

@@ -1,6 +1,6 @@
 // ignore_for_file: file_names, avoid_print, unnecessary_null_comparison
 
-import "dart:io";
+import 'dart:typed_data';
 
 import "package:chat_app/models/userModel.dart";
 import "package:chat_app/pages/ChangeName-Page.dart";
@@ -9,8 +9,8 @@ import "package:cloud_firestore/cloud_firestore.dart";
 import "package:firebase_auth/firebase_auth.dart";
 import "package:firebase_storage/firebase_storage.dart";
 import "package:flutter/cupertino.dart";
+import 'package:flutter/foundation.dart' show kIsWeb;
 import "package:flutter/material.dart";
-import "package:image_cropper/image_cropper.dart";
 import "package:image_picker/image_picker.dart";
 
 class ProfilePage extends StatefulWidget {
@@ -26,7 +26,8 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  File? imageFile;
+  XFile? imageFile;     // dùng XFile thay File để hỗ trợ Web
+  Uint8List? imageBytes; // bytes cho Web
   User? _user;
   String? _fullName;
   String? _profileImageUrl;
@@ -41,7 +42,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void checkValues() {
     if (imageFile == null) {
-      print("Xin hãy chọn ảnh trước");
+      print("Xin hãy chọn ảnh trước");
     } else {
       _uploadProfilePicture();
     }
@@ -51,17 +52,25 @@ class _ProfilePageState extends State<ProfilePage> {
     User? user = _auth.currentUser;
     if (user != null && imageFile != null) {
       try {
-        // Upload image to Firebase Storage
-        UploadTask uploadTask =
-            _storage.ref('profilepictures/${user.uid}.jpg').putFile(imageFile!);
+        UploadTask uploadTask;
+        if (kIsWeb && imageBytes != null) {
+          uploadTask = _storage
+              .ref('profilepictures/${user.uid}.jpg')
+              .putData(imageBytes!);
+        } else {
+          // Mobile: đọc bytes từ XFile
+          final bytes = await imageFile!.readAsBytes();
+          uploadTask = _storage
+              .ref('profilepictures/${user.uid}.jpg')
+              .putData(bytes);
+        }
 
         // Get the updated download URL
         String imageUrl = await (await uploadTask).ref.getDownloadURL();
 
         // Update Firestore document with the new profile picture URL
         await FirebaseFirestore.instance
-            .collection(
-                'users') // Replace 'users' with your Firestore collection name
+            .collection('users')
             .doc(user.uid)
             .update({'profilepicture': imageUrl});
 
@@ -69,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _profileImageUrl = imageUrl;
         });
       } catch (error) {
-        print('Lỗi upload hình: $error');
+        print('Lỗi upload hình: $error');
       }
     }
   }
@@ -138,22 +147,21 @@ class _ProfilePageState extends State<ProfilePage> {
     XFile? pickedFile = await ImagePicker().pickImage(source: source);
 
     if (pickedFile != null) {
-      cropImage(pickedFile);
-    }
-  }
-
-  void cropImage(XFile file) async {
-    ImageCropper imageCropper = ImageCropper();
-    CroppedFile? croppedImage = (await imageCropper.cropImage(
-      sourcePath: file.path,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-      compressQuality: 20,
-    ));
-
-    if (croppedImage != null) {
-      setState(() {
-        imageFile = File(croppedImage.path);
-      });
+      if (kIsWeb) {
+        // Web: không dùng image_cropper — đọc bytes trực tiếp
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          imageFile = pickedFile;
+          imageBytes = bytes;
+        });
+      } else {
+        // Mobile: có thể crop nếu muốn (tạm thời skip crop)
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          imageFile = pickedFile;
+          imageBytes = bytes;
+        });
+      }
     }
   }
 

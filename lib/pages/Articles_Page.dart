@@ -1,9 +1,10 @@
 // ignore_for_file: use_key_in_widget_constructors, unused_element, prefer_const_constructors, use_build_context_synchronously, unnecessary_null_comparison, avoid_unnecessary_containers, prefer_const_literals_to_create_immutables, sized_box_for_whitespace, avoid_print, library_private_types_in_public_api, unused_import
 import 'package:chat_app/models/userModel.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -21,7 +22,8 @@ class _HistoryState extends State<History> {
   String searchText = '';
   List<Post> posts = [];
   late TextEditingController postController;
-  File? selectedImage;
+  XFile? selectedImageFile; // dùng XFile thay File để hỗ trợ Web
+  Uint8List? selectedImageBytes; // bytes cho Web
   bool _isExpanded = false;
 
   void _toggleImageSize() {
@@ -120,13 +122,19 @@ class _HistoryState extends State<History> {
     String postText = postController.text;
     String? imageUrl;
 
-    if (selectedImage != null) {
+    if (selectedImageFile != null) {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final ref = FirebaseStorage.instance
           .ref()
           .child('posts')
           .child('image_$timestamp.jpg');
-      await ref.putFile(selectedImage!);
+      if (kIsWeb && selectedImageBytes != null) {
+        await ref.putData(selectedImageBytes!);
+      } else if (!kIsWeb) {
+        // Mobile: dùng putData từ bytes đọc được
+        final bytes = await selectedImageFile!.readAsBytes();
+        await ref.putData(bytes);
+      }
       imageUrl = await ref.getDownloadURL();
     }
 
@@ -163,7 +171,8 @@ class _HistoryState extends State<History> {
     setState(() {
       posts.insert(0, newPost);
       postController.clear();
-      selectedImage = null;
+      selectedImageFile = null;
+      selectedImageBytes = null;
     });
   }
 
@@ -219,8 +228,10 @@ class _HistoryState extends State<History> {
         await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
       setState(() {
-        selectedImage = File(pickedFile.path);
+        selectedImageFile = pickedFile;
+        selectedImageBytes = bytes;
       });
     }
   }
@@ -455,10 +466,12 @@ class _HistoryState extends State<History> {
               height: 10,
               color: Color.fromARGB(255, 236, 236, 236),
             ),
-            if (selectedImage != null)
+            if (selectedImageFile != null)
               Container(
                 width: screenWidth,
-                child: Image.file(selectedImage!, fit: BoxFit.cover),
+                child: selectedImageBytes != null
+                    ? Image.memory(selectedImageBytes!, fit: BoxFit.cover)
+                    : const SizedBox(),
               ),
             SizedBox(
               height: 800,

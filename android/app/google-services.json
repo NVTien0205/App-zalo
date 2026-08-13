@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "470626697982",
-    "project_id": "zaloapp-d775e",
-    "storage_bucket": "zaloapp-d775e.appspot.com"
+    "project_number": "764109092494",
+    "firebase_url": "https://app-zalo-6c0f6-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "app-zalo-6c0f6",
+    "storage_bucket": "app-zalo-6c0f6.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:470626697982:android:dbc53c064bc33b825fdbaf",
+        "mobilesdk_app_id": "1:764109092494:android:ca511bee2fba64412f7bdf",
         "android_client_info": {
           "package_name": "com.example.chat_app"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCs9SU7wR9iPW2iIg3r4wrnsklXLW2vzl0"
+          "current_key": "AIzaSyDTsi-yCLieZvjt8AgR9tsD9ipWULdkr18"
         }
       ],
       "services": {

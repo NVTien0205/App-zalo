@@ -5,7 +5,7 @@ class UserModel {
   String? fullname;
   String? email;
   String? profilepicture;
-  String? friendList;
+  List<String>? friendList;
   UserModel(
       {this.uid,
       this.fullname,
@@ -19,27 +19,15 @@ class UserModel {
     email = map["email"];
     profilepicture = map["profilepicture"];
 
-    dynamic friendListData = map["friendList"];
-    if (friendListData is List) {
-      // Handle the case where 'friendListData' is a List
-      // For example, you can join the elements into a single string
-      friendList = friendListData.join(',');
-    } else if (friendListData is String) {
-      friendList = friendListData; // Directly assign the string
-    } else {
-      // Handle the case where 'friendListData' is neither a List nor a String
-      friendList =
-          null; // Or provide a default value based on your requirements
-    }
+    friendList = List<String>.from(map["friendList"] ?? []);
   }
-
   Map<String, dynamic> toMap() {
     return {
       "uid": uid,
       "fullname": fullname,
       "email": email,
       "profilepicture": profilepicture,
-      "friendList": friendList,
+      "friendList": friendList ?? [],
     };
   }
 }

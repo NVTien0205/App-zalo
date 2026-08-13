@@ -20,7 +20,7 @@ class ConfirmAccount extends StatefulWidget {
   final UserModel userModel;
   final User firebaseUser;
 
-  ConfirmAccount(
+  const ConfirmAccount(
       {Key? key, required this.userModel, required this.firebaseUser})
       : super(key: key);
   @override

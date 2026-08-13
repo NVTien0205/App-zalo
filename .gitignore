@@ -1,12 +1,12 @@
 
-# See https://www.dartlang.org/guides/libraries/private-files
+# See https://www.dartlang.org/guides/libraries/private-files - API key : AIzaSyBOgmrG1kp2Yd3E2OuUIgD7DhTlQ_b21kw
 
 # Files and directories created by pub
 .dart_tool/
 .packages
 build/
-# If you're building an application, you may want to check-in your pubspec.lock
-pubspec.lock
+# Giữ pubspec.lock trong repo để Docker/FVM build reproducible
+# pubspec.lock
 
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
@@ -71,4 +71,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-2bdb411 (Mô tả)
+
+# FVM — pin SDK local, không commit bản tải về
+
+# Docker build output
+docker-output/
+
+# VS Code — giữ settings.json (FVM path), bỏ qua phần cá nhân
+.vscode/launch.json
+
+# FVM Version Cache
+.fvm/
+
+# Android/CMake build artifacts
+**/.cxx/
+android/app/.cxx/

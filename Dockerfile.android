@@ -1,0 +1,17 @@
+# Build APK với toolchain cố định — tránh xung đột Gradle/JDK trên máy dev
+FROM ghcr.io/cirruslabs/flutter:3.29.3
+
+WORKDIR /app
+
+RUN flutter precache --android \
+    && yes | flutter doctor --android-licenses || true
+
+COPY pubspec.yaml pubspec.lock ./
+RUN flutter pub get
+
+COPY . .
+
+COPY docker/scripts/build-apk.sh /build-apk.sh
+RUN chmod +x /build-apk.sh
+
+ENTRYPOINT ["/build-apk.sh"]
