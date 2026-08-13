@@ -94,4 +94,4 @@ cat >> .gitignore << 'EOF'
 analysis_options_dev.yaml
 analysis_options_migrate.yaml
 analysis_options.yaml.bak
-EOF
+EOFlib.zip
