@@ -1,16 +1,18 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chat_app/core/errors/result.dart';
 import 'package:chat_app/core/errors/auth_error_mapper.dart';
+import 'package:chat_app/features/auth/domain/auth_service.dart';
 
-/// Tách "gọi Firebase" khỏi "hiển thị" — page sẽ gọi qua đây thay vì
-/// gọi thẳng FirebaseAuth.instance (xem audit: 7 chỗ đang gọi trực tiếp).
-/// Chưa nối page nào (đúng AC T-06) — page migrate ở T-08.
-class AuthService {
+/// Implementation thật của AuthService, gọi trực tiếp Firebase Auth SDK.
+/// Đổi tên từ auth_service.dart cũ (T-06 gốc) sang đây khi nâng cấp thành
+/// Repository Pattern — nội dung logic giữ nguyên, chỉ đổi vị trí + implements.
+class FirebaseAuthService implements AuthService {
   final FirebaseAuth _firebaseAuth;
 
-  AuthService({FirebaseAuth? firebaseAuth})
+  FirebaseAuthService({FirebaseAuth? firebaseAuth})
       : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
+  @override
   Future<Result<UserCredential>> signUp({
     required String email,
     required String password,
@@ -26,6 +28,7 @@ class AuthService {
     }
   }
 
+  @override
   Future<Result<UserCredential>> signIn({
     required String email,
     required String password,
@@ -41,6 +44,7 @@ class AuthService {
     }
   }
 
+  @override
   Future<Result<void>> signOut() async {
     try {
       await _firebaseAuth.signOut();
@@ -50,6 +54,7 @@ class AuthService {
     }
   }
 
+  @override
   Future<Result<void>> resetPassword({required String email}) async {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);

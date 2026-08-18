@@ -12,7 +12,7 @@ class AuthErrorMapper {
       switch (code) {
         case "email-already-in-use":
             return const AppError(
-                code: "email-alrady-in-use",
+                code: "email-already-in-use",
                 message: "Email này đã được sử dụng để đăng ký!" 
             );
         case "weak-password":
