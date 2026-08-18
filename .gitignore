@@ -71,4 +71,32 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-2bdb411 (Mô tả)
+
+# FVM — pin SDK local, không commit bản tải về
+
+# Docker build output
+docker-output/
+
+# VS Code — giữ settings.json (FVM path), bỏ qua phần cá nhân
+.vscode/launch.json
+
+# FVM Version Cache
+.fvm/
+
+# Android/CMake build artifacts
+**/.cxx/
+android/app/.cxx/
+
+
+
+# Dev-only lint configs — không phải config chính thức của team, không commit
+analysis_options_dev.yaml
+analysis_options_migrate.yaml
+analysis_options.yaml.bak
+
+lib.zip
+
+# Firebase config chứa client key — bỏ khỏi git để tránh Secret Scanning alert.
+# Dev mới build Android cần tự lấy file này từ Firebase Console:
+#   Project Settings -> Your apps -> Android -> Download google-services.json
+android/app/google-services.json
