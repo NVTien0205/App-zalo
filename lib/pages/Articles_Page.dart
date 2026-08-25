@@ -1,5 +1,5 @@
 // ignore_for_file: use_key_in_widget_constructors, unused_element, prefer_const_constructors, use_build_context_synchronously, unnecessary_null_comparison, avoid_unnecessary_containers, prefer_const_literals_to_create_immutables, sized_box_for_whitespace, avoid_print, library_private_types_in_public_api, unused_import
-import 'package:chat_app/models/userModel.dart';
+import 'package:chat_app/models/user_model.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';

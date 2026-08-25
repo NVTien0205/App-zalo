@@ -1,8 +1,8 @@
 // ignore_for_file: file_names
 
 import 'dart:ui';
-import 'package:chat_app/pages/Login-Page.dart';
-import 'package:chat_app/pages/Register-Page.dart';
+import 'package:chat_app/pages/login_page.dart';
+import 'package:chat_app/pages/register_page.dart';
 import 'package:flutter/material.dart';
 
 // ignore: use_key_in_widget_constructors

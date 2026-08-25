@@ -2,9 +2,9 @@
 
 import 'dart:typed_data';
 
-import "package:chat_app/models/userModel.dart";
-import "package:chat_app/pages/ChangeName-Page.dart";
-import "package:chat_app/pages/ChangePass-Page.dart";
+import "package:chat_app/models/user_model.dart";
+import "package:chat_app/pages/change_name_page.dart";
+import "package:chat_app/pages/change_pass_page.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:firebase_auth/firebase_auth.dart";
 import "package:firebase_storage/firebase_storage.dart";

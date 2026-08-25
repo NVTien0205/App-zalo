@@ -21,20 +21,14 @@ class AuthErrorMapper {
                 message: "Mật khẩu quá yếu!, vui lòng sử dụng mật khẩu trên 10 ký tự!"
             );
         case "invalid-email":
-            return const AppError(
-                code: "invalid-email",
-                message: "Email không hợp lệ!"
-            );
+            return AppError.invalidEmail;
         case 'user-not-found':
           return const AppError(
             code: 'user-not-found',
             message: 'Không tìm thấy tài khoản tương ứng',
           );
         case 'wrong-password':
-            return const AppError(
-                code: "wrong-password",
-                message: "Mật khẩu không đúng!"
-            );
+            return AppError.wrongPassword;
         case 'invalid-credential':
           return const AppError(
             code: 'invalid-credential',

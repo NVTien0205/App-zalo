@@ -1,10 +1,10 @@
 // ignore_for_file: file_names
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:chat_app/models/userModel.dart';
+import 'package:chat_app/models/user_model.dart';
 
 class FirebaseHelper {
-  static Future<UserModel?> getUserModelById(String uid) async {
+  Future<UserModel?> getUserModelById(String uid) async {
     UserModel? userModel;
 
     DocumentSnapshot docSnap =

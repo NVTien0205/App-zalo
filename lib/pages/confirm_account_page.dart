@@ -1,7 +1,7 @@
 // ignore_for_file: file_names, avoid_print
 
 import "dart:typed_data";
-import "package:flutter/foundation.dart" show kIsWeb;
+import "package:flutter/foundation.dart" show kIsWeb, debugPrint;
 
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:firebase_auth/firebase_auth.dart";
@@ -9,9 +9,9 @@ import "package:firebase_storage/firebase_storage.dart";
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 import "package:image_picker/image_picker.dart";
-import "package:chat_app/components/NameTextField.dart";
-import "package:chat_app/models/userModel.dart";
-import "package:chat_app/pages/Main-Page.dart";
+import "package:chat_app/components/name_text_field.dart";
+import "package:chat_app/models/user_model.dart";
+import "package:chat_app/pages/main_page.dart";
 
 const String defaultProfilePictureUrl =
     "https://firebasestorage.googleapis.com/v0/b/YOUR_PROJECT/o/defaults%2Fdefault_avatar.png?alt=media";
@@ -88,9 +88,9 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
   void checkValues() {
     String fullname = fullNameController.text.trim();
     if (fullname == "") {
-      print("Làm ơn hãy điền đầy đủ thông tin!");
+      debugPrint("Làm ơn hãy điền đầy đủ thông tin!");
     } else {
-      print("Đang cập nhật");
+      debugPrint("Đang cập nhật");
       uploadData();
     }
   }
@@ -126,17 +126,18 @@ class _ConfirmAccountState extends State<ConfirmAccount> {
     await FirebaseFirestore.instance
         .collection("users")
         .doc(widget.userModel.uid)
-        .set(widget.userModel.toMap())
-        .then((value) {
-      print("đang cập nhật");
-      print("Đã cập nhật thành công!");
-      Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return MainPage(
-          firebaseUser: widget.firebaseUser,
-          userModel: widget.userModel,
-        );
-      }));
-    });
+        .set(widget.userModel.toMap());
+
+    debugPrint("đang cập nhật");
+    debugPrint("Đã cập nhật thành công!");
+
+    if (!mounted) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) {
+      return MainPage(
+        firebaseUser: widget.firebaseUser,
+        userModel: widget.userModel,
+      );
+    }));
   }
 
   @override

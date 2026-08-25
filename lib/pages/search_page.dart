@@ -1,9 +1,9 @@
 // ignore_for_file: file_names, non_constant_identifier_names, prefer_is_empty, avoid_print, use_build_context_synchronously
 
-import 'package:chat_app/models/chatRoomModel.dart';
-import 'package:chat_app/models/chatRoomUuidModel.dart';
-import 'package:chat_app/models/userModel.dart';
-import 'package:chat_app/pages/ChatRoom-Page.dart';
+import 'package:chat_app/models/chat_room_model.dart';
+import 'package:chat_app/models/chat_room_uuid_model.dart';
+import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/pages/chat_room_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -112,8 +112,9 @@ class _SearchPageState extends State<SearchPage> {
                           snapshot.data as QuerySnapshot;
 
                       if (dataSnapshot.docs.length > 0) {
-                        Map<String, dynamic> userMap =
-                            dataSnapshot.docs[0].data() as Map<String, dynamic>;
+                        final docData = dataSnapshot.docs[0].data();
+                        if (docData == null) return const SizedBox.shrink();
+                        Map<String, dynamic> userMap = docData as Map<String, dynamic>;
 
                         UserModel searchedUser = UserModel.fromMap(userMap);
 

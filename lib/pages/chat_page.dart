@@ -1,14 +1,16 @@
 // ignore_for_file: file_names, library_private_types_in_public_api
 
-import 'package:chat_app/models/chatRoomModel.dart';
-import 'package:chat_app/models/firebaseHelper.dart';
-import 'package:chat_app/models/userModel.dart';
-import 'package:chat_app/pages/ChatRoom-Page.dart';
+import 'package:chat_app/models/chat_room_model.dart';
+// import 'package:chat_app/models/firebase_helper.dart';
+import 'package:chat_app/models/user_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chat_app/app/app.dart';
+import 'package:chat_app/pages/chat_room_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class ChatPage extends StatefulWidget {
+class ChatPage extends ConsumerStatefulWidget {
   final UserModel userModel;
   final User firebaseUser;
   const ChatPage(
@@ -16,10 +18,10 @@ class ChatPage extends StatefulWidget {
       : super(key: key);
 
   @override
-  _ChatPageState createState() => _ChatPageState();
+  ConsumerState<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends ConsumerState<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +50,7 @@ class _ChatPageState extends State<ChatPage> {
                     participantKeys.remove(widget.userModel.uid);
 
                     return FutureBuilder(
-                      future: FirebaseHelper.getUserModelById(
+                      future: ref.read(databaseServiceProvider).getUserModelById(
                         participantKeys[0],
                       ),
                       builder: (context, userData) {

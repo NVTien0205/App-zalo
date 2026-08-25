@@ -2,7 +2,7 @@
 
 import "package:firebase_auth/firebase_auth.dart";
 import "package:flutter/material.dart";
-import "package:chat_app/components/PasswordTextField.dart";
+import "package:chat_app/components/password_text_field.dart";
 
 class ChangePassword extends StatefulWidget {
   const ChangePassword({Key? key}) : super(key: key);

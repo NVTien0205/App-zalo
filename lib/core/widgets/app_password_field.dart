@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:chat_app/components/PasswordTextField.dart';
+import 'package:chat_app/components/password_text_field.dart';
 
 /// Wrap MyPasswordTextField — giữ nguyên hành vi (toggle ẩn/hiện có sẵn).
 class AppPasswordField extends StatelessWidget {

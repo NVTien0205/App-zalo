@@ -1,15 +1,15 @@
 // ignore_for_file: file_names, library_private_types_in_public_api, prefer_const_literals_to_create_immutables, prefer_const_constructors, use_key_in_widget_constructors, use_build_context_synchronously
 
-import 'package:chat_app/pages/Articles_Page.dart';
-import 'package:chat_app/pages/Chat-Page.dart';
-import 'package:chat_app/pages/FriendList.dart';
-import 'package:chat_app/pages/Home-Page.dart';
-import 'package:chat_app/pages/Notification-Page.dart';
-import 'package:chat_app/pages/Search-Page.dart';
+import 'package:chat_app/pages/articles_page.dart';
+import 'package:chat_app/pages/chat_page.dart';
+import 'package:chat_app/pages/friend_list_page.dart';
+import 'package:chat_app/pages/home_page.dart';
+import 'package:chat_app/pages/notification_page.dart';
+import 'package:chat_app/pages/search_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:chat_app/models/userModel.dart';
-import 'package:chat_app/pages/User-Information.dart';
+import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/pages/user_information_page.dart';
 
 class MainPage extends StatefulWidget {
   final UserModel userModel;

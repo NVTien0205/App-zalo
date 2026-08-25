@@ -3,10 +3,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import "package:flutter/material.dart";
-import 'package:chat_app/components/EmailTextField.dart';
-import 'package:chat_app/components/PasswordTextField.dart';
-import 'package:chat_app/models/userModel.dart';
-import 'package:chat_app/pages/Main-Page.dart';
+import 'package:chat_app/components/email_text_field.dart';
+import 'package:chat_app/components/password_text_field.dart';
+import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/pages/main_page.dart';
 
 // ignore: must_be_immutable
 class LoginPage extends StatelessWidget {
@@ -38,9 +38,14 @@ class LoginPage extends StatelessWidget {
 
       DocumentSnapshot userData =
           await FirebaseFirestore.instance.collection("users").doc(uid).get();
+      final data = userData.data();
+      if (data == null) {
+        print("User profile không tồn tại cho uid: $uid");
+        // TODO: Tự tạo profile mặc định hoặc báo lỗi tùy logic
+        return;
+      }
       // ignore: unused_local_variable
-      UserModel userModel =
-          UserModel.fromMap(userData.data() as Map<String, dynamic>);
+      UserModel userModel = UserModel.fromMap(data as Map<String, dynamic>);
       print("Đăng nhập thành công!");
       // ignore: use_build_context_synchronously
       Navigator.push(context, MaterialPageRoute(builder: (context) {

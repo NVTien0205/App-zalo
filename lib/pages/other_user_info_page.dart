@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:chat_app/models/userModel.dart';
+import 'package:chat_app/models/user_model.dart';
 
 class OtherUserScreen extends StatefulWidget {
   const OtherUserScreen({

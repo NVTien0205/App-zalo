@@ -1,9 +1,9 @@
 // ignore_for_file: file_names, library_private_types_in_public_api, avoid_print
 
-import 'package:chat_app/pages/OtherUserInfo-Page.dart';
+import 'package:chat_app/pages/other_user_info_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:chat_app/models/userModel.dart';
+import 'package:chat_app/models/user_model.dart';
 
 class FriendListScreen extends StatefulWidget {
   final UserModel userModel;

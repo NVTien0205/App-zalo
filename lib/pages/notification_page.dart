@@ -1,6 +1,6 @@
 // ignore_for_file: file_names
 
-import 'package:chat_app/models/userModel.dart';
+import 'package:chat_app/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 

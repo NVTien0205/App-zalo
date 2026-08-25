@@ -3,10 +3,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import "package:flutter/material.dart";
-import 'package:chat_app/components/PasswordTextField.dart';
-import 'package:chat_app/components/EmailTextField.dart';
-import 'package:chat_app/models/userModel.dart';
-import 'package:chat_app/pages/ConfirmAccount-Page.dart';
+import 'package:chat_app/components/password_text_field.dart';
+import 'package:chat_app/components/email_text_field.dart';
+import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/pages/confirm_account_page.dart';
 
 // ignore: must_be_immutable
 class RegisterPage extends StatelessWidget {
@@ -15,7 +15,7 @@ class RegisterPage extends StatelessWidget {
   TextEditingController confirmPasswordController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
-  final RegExp _emailRegex = RegExp(r"^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$");
+  final RegExp _emailRegex = RegExp(r"^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$");
 
   void _showSnack(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -65,6 +65,7 @@ class RegisterPage extends StatelessWidget {
         default:
           message = "Đăng ký thất bại, vui lòng thử lại sau!";
       }
+      if (!context.mounted) return;
       _showSnack(context, message);
     }
 
@@ -80,17 +81,17 @@ class RegisterPage extends StatelessWidget {
       await FirebaseFirestore.instance
           .collection("users")
           .doc(uid)
-          .set(newUser.toMap())
-          .then((value) {
-        print("Đăng ký thành công!");
+          .set(newUser.toMap());
 
-        Navigator.push(context, MaterialPageRoute(builder: (context) {
-          return ConfirmAccount(
-            firebaseUser: credential!.user!,
-            userModel: newUser,
-          );
-        }));
-      });
+      print("Đăng ký thành công!");
+
+      if (!context.mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) {
+        return ConfirmAccount(
+          firebaseUser: credential!.user!,
+          userModel: newUser,
+        );
+      }));
     }
   }
 

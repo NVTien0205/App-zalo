@@ -1,12 +1,12 @@
 // ignore_for_file: file_names, avoid_unnecessary_containers, avoid_print
 
 import 'package:chat_app/database/database.dart';
-import 'package:chat_app/models/chatRoomModel.dart';
-import 'package:chat_app/models/messageModel.dart';
-import 'package:chat_app/models/userModel.dart';
-import 'package:chat_app/pages/Main-Page.dart';
-import 'package:chat_app/pages/OtherUserInfo-Page.dart';
-import 'package:chat_app/pages/Search-Page.dart';
+import 'package:chat_app/models/chat_room_model.dart';
+import 'package:chat_app/models/message_model.dart';
+import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/pages/main_page.dart';
+import 'package:chat_app/pages/other_user_info_page.dart';
+import 'package:chat_app/pages/search_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
