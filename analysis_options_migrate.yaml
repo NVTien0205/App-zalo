@@ -1,0 +1,21 @@
+# analysis_options_migrate.yaml
+# Dùng tạm thời để rà soát cross-platform & type-safety trước khi migrate/fix ticket.
+# KHÔNG dùng làm linter chính thức cho CI/CD — chỉ chạy thủ công khi cần audit.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    deprecated_member_use: warning
+    avoid_web_libraries_in_flutter: warning
+    unused_import: warning
+    type_annotate_public_apis: warning
+    unrelated_type_equality_checks: warning
+
+linter:
+  rules:
+    - deprecated_member_use
+    - avoid_web_libraries_in_flutter
+    - unused_import
+    - type_annotate_public_apis
+    - unrelated_type_equality_checks
