@@ -7,6 +7,8 @@ import 'package:chat_app/pages/home_page.dart';
 import 'package:chat_app/pages/main_page.dart';
 import 'package:chat_app/features/auth/domain/auth_service.dart';
 import 'package:chat_app/features/auth/data/firebase_auth_service.dart';
+import 'package:chat_app/app/routes.dart';
+
 
 final authStateProvider = StreamProvider<User?>((ref) {
   return FirebaseAuth.instance.authStateChanges();
@@ -37,6 +39,7 @@ class ChatApp extends ConsumerWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Chat App',
+      routes: AppRoutes.routes,
       home: authState.when(
         data: (user) {
           if (user == null) {

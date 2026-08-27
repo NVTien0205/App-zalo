@@ -10,7 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:chat_app/pages/home_page.dart';
 import 'package:chat_app/app/app.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
 
 void main() {
   testWidgets('ChatApp shows HomePage with login/register buttons when unauthenticated',
