@@ -5,8 +5,8 @@
 .dart_tool/
 .packages
 build/
-# If you're building an application, you may want to check-in your pubspec.lock
-pubspec.lock
+# Giữ pubspec.lock trong repo để Docker/FVM build reproducible
+# pubspec.lock
 
 # Directory created by dartdoc
 # If you don't generate documentation locally you can remove this line.
@@ -100,3 +100,9 @@ lib.zip
 # Dev mới build Android cần tự lấy file này từ Firebase Console:
 #   Project Settings -> Your apps -> Android -> Download google-services.json
 android/app/google-services.json
+
+
+
+# Personal setup notes — not for the shared repo
+ANDROID_STUDIO_SETUP.md
+ANDROID_SETUP.md
