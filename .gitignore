@@ -102,3 +102,7 @@ lib.zip
 android/app/google-services.json
 
 
+
+# Personal setup notes — not for the shared repo
+ANDROID_STUDIO_SETUP.md
+ANDROID_SETUP.md
