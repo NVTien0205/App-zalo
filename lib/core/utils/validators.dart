@@ -9,7 +9,8 @@ class Validators {
       RegExp(r"^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$");
 
   static final RegExp _digitRegex = RegExp(r'[0-9]');
-  static final RegExp _specialCharRegex = RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-\[\]\\/;+=~`]');
+  static final RegExp _specialCharRegex =
+      RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-\[\]\\/;+=~`]');
 
   static const int _minPasswordLength = 10;
 

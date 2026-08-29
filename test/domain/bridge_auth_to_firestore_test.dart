@@ -9,7 +9,9 @@ import 'package:flutter/foundation.dart' show debugPrint;
 
 // 1. Mock các đối tượng cần thiết
 class MockUser extends Mock implements User {} // Mock User của Auth
-class MockFirebaseHelper extends Mock implements FirebaseHelper {} // Mock Helper (không dùng static)
+
+class MockFirebaseHelper extends Mock
+    implements FirebaseHelper {} // Mock Helper (không dùng static)
 
 void main() {
   late MockFirebaseHelper mockHelper;
@@ -23,7 +25,9 @@ void main() {
     when(() => mockAuthUser.uid).thenReturn('12345678');
   });
 
-  test('Nghiệp vụ: Khi Auth có User, UserModelProvider phải tự động fetch profile', () async {
+  test(
+      'Nghiệp vụ: Khi Auth có User, UserModelProvider phải tự động fetch profile',
+      () async {
     debugPrint('>>> Bắt đầu Lab: Bridge Auth to Firestore');
 
     // 2. Thiết lập giả lập cho Firestore
@@ -32,8 +36,7 @@ void main() {
         fullname: 'Nguyễn Tiến',
         email: 'tien@test.com',
         friendList: [],
-        profilepicture: ''
-    );
+        profilepicture: '');
 
     // Lưu ý: FirebaseHelper lúc này phải có hàm instance (không static) hoặc bọc qua service
     when(() => mockHelper.getUserModelById('12345678'))
@@ -54,7 +57,8 @@ void main() {
 
     // 4. Đọc Future của userModelProvider
     // Lưu ý: Trong code của bạn là FutureProvider.family(uid), nên phải truyền uid vào
-    final userModel = await container.read(userModelProvider('12345678').future);
+    final userModel =
+        await container.read(userModelProvider('12345678').future);
 
     // 5. Kiểm tra kết quả
     debugPrint('Kết quả: Fullname = ${userModel?.fullname}');
@@ -62,8 +66,10 @@ void main() {
     expect(userModel?.uid, equals('12345678'));
   });
 
-  test('Nghiệp vụ: Xử lý an toàn khi Firestore không có dữ liệu (User mới)', () async {
-    when(() => mockHelper.getUserModelById('999')).thenAnswer((_) async => null);
+  test('Nghiệp vụ: Xử lý an toàn khi Firestore không có dữ liệu (User mới)',
+      () async {
+    when(() => mockHelper.getUserModelById('999'))
+        .thenAnswer((_) async => null);
 
     final container = ProviderContainer(overrides: [
       authStateProvider.overrideWith((ref) => Stream.value(mockAuthUser)),

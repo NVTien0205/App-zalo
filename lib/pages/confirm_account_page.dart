@@ -15,6 +15,7 @@ import "package:chat_app/pages/main_page.dart";
 
 const String defaultProfilePictureUrl =
     "https://firebasestorage.googleapis.com/v0/b/YOUR_PROJECT/o/defaults%2Fdefault_avatar.png?alt=media";
+
 // ignore: must_be_immutable
 class ConfirmAccount extends StatefulWidget {
   final UserModel userModel;

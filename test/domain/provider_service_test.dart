@@ -10,7 +10,9 @@ import 'package:flutter/foundation.dart' show debugPrint;
 
 // Tạo các lớp Mock để giả lập
 class MockAuthService extends Mock implements AuthService {}
+
 class MockUserCredential extends Mock implements UserCredential {}
+
 class MockUser extends Mock implements User {}
 
 void main() {
@@ -38,15 +40,16 @@ void main() {
   group('Auth Service & Provider Tests', () {
     test('signIn trả về Success khi thông tin hợp lệ', () async {
       debugPrint('>>> Bắt đầu test: signIn thành công');
-      
+
       // Stubbing: Giả lập thành công
       when(() => mockAuth.signIn(
             email: any(named: 'email'),
             password: any(named: 'password'),
           )).thenAnswer((_) async {
-            debugPrint('MockAuthService: Nhận lệnh signIn -> Trả về Success(mockCredential)');
-            return Success(mockCredential);
-          });
+        debugPrint(
+            'MockAuthService: Nhận lệnh signIn -> Trả về Success(mockCredential)');
+        return Success(mockCredential);
+      });
 
       debugPrint('Ứng dụng: Gọi signIn qua Provider...');
       final result = await container.read(authServiceProvider).signIn(
@@ -57,15 +60,17 @@ void main() {
       debugPrint('Kết quả nhận được: isSuccess = ${result.isSuccess}');
       expect(result.isSuccess, isTrue);
       expect(result, isA<Success<UserCredential>>());
-      
+
       verify(() => mockAuth.signIn(
             email: 'test@example.com',
             password: 'password123',
           )).called(1);
-      debugPrint('Xác minh: Hàm signIn đã được gọi đúng 1 lần với tham số hợp lệ.');
+      debugPrint(
+          'Xác minh: Hàm signIn đã được gọi đúng 1 lần với tham số hợp lệ.');
     });
 
-    test('signIn trả về Failure khi email không hợp lệ (không chứa @)', () async {
+    test('signIn trả về Failure khi email không hợp lệ (không chứa @)',
+        () async {
       debugPrint('>>> Bắt đầu test: signIn thất bại (Email sai định dạng)');
 
       // Stubbing: Giả lập lỗi định dạng email bằng Matcher
@@ -73,9 +78,10 @@ void main() {
             email: any(named: 'email', that: isNot(contains('@'))),
             password: any(named: 'password'),
           )).thenAnswer((_) async {
-            debugPrint('MockAuthService: Nhận email không hợp lệ -> Trả về Failure(AppError.invalidEmail)');
-            return const Failure(AppError.invalidEmail);
-          });
+        debugPrint(
+            'MockAuthService: Nhận email không hợp lệ -> Trả về Failure(AppError.invalidEmail)');
+        return const Failure(AppError.invalidEmail);
+      });
 
       debugPrint('Ứng dụng: Gọi signIn với email "invalid-email"...');
       final result = await container.read(authServiceProvider).signIn(
@@ -88,7 +94,8 @@ void main() {
       result.fold(
         onSuccess: (_) => fail('Nên trả về Failure'),
         onFailure: (error) {
-          debugPrint('Lỗi nhận được: code = ${error.code}, message = ${error.message}');
+          debugPrint(
+              'Lỗi nhận được: code = ${error.code}, message = ${error.message}');
           expect(error, AppError.invalidEmail);
         },
       );
@@ -97,7 +104,8 @@ void main() {
     test('signOut gọi đúng vào AuthService', () async {
       debugPrint('>>> Bắt đầu test: signOut');
       when(() => mockAuth.signOut()).thenAnswer((_) async {
-        debugPrint('MockAuthService: Nhận lệnh signOut -> Trả về Success(null)');
+        debugPrint(
+            'MockAuthService: Nhận lệnh signOut -> Trả về Success(null)');
         return const Success(null);
       });
 

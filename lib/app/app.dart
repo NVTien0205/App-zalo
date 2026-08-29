@@ -9,7 +9,6 @@ import 'package:chat_app/features/auth/domain/auth_service.dart';
 import 'package:chat_app/features/auth/data/firebase_auth_service.dart';
 import 'package:chat_app/app/routes.dart';
 
-
 final authStateProvider = StreamProvider<User?>((ref) {
   return FirebaseAuth.instance.authStateChanges();
 });
@@ -19,7 +18,7 @@ final databaseServiceProvider = Provider((ref) => FirebaseHelper());
 /// Fetch UserModel từ Firestore theo uid — tách riêng theo family để
 /// Riverpod tự cache/rebuild đúng khi uid đổi.
 final userModelProvider =
-FutureProvider.family<UserModel?, String>((ref, uid) async {
+    FutureProvider.family<UserModel?, String>((ref, uid) async {
   return ref.watch(databaseServiceProvider).getUserModelById(uid);
 });
 

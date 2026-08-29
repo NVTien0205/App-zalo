@@ -22,9 +22,13 @@ class _HistoryState extends State<History> {
   String searchText = '';
   List<Post> posts = [];
   late TextEditingController postController;
-  XFile? selectedImageFile; // dùng XFile thay File để hỗ trợ Web
-  Uint8List? selectedImageBytes; // bytes cho Web
+  XFile? selectedImageFile; 
+  Uint8List? selectedImageBytes; 
   bool _isExpanded = false;
+
+  void _logDataFlow(String message) {
+    debugPrint('Articles data -> $message');
+  }
 
   void _toggleImageSize() {
     setState(() {
@@ -41,26 +45,34 @@ class _HistoryState extends State<History> {
 
   void deletePost(int index) async {
     try {
+      final post = posts[index];
+      _logDataFlow(
+          'delete start | index: $index | postId: ${post.postId} | localCountBefore: ${posts.length}');
       // Kiểm tra xem tài liệu có tồn tại trước khi cố gắng xóa
       DocumentSnapshot postSnapshot = await FirebaseFirestore.instance
           .collection('posts')
-          .doc(posts[index].timestamp.toString())
+          .doc(post.postId)
           .get();
-
+      debugPrint('khởi tạo và lấy postId từ tài liệu -> xem tài liệu');
+      _logDataFlow(
+          'delete fetch document | postId: ${post.postId} | exists: ${postSnapshot.exists}');
       if (postSnapshot.exists) {
         // Tài liệu tồn tại, tiếp tục xóa
         await FirebaseFirestore.instance
             .collection('posts')
-            .doc(posts[index].timestamp.toString())
+            .doc(post.postId)
             .delete();
         setState(() {
           posts.removeAt(index);
+          _logDataFlow(
+              'delete success | removed postId: ${post.postId} | localCountAfter: ${posts.length}');
+          debugPrint('Xóa bài viết thành công');
         });
       } else {
-        print("Tài liệu không tồn tại.");
+        debugPrint("Tài liệu không tồn tại");
       }
     } catch (e) {
-      print("Lỗi khi xóa bài viết: $e");
+      debugPrint("Lỗi khi xóa bài viết: $e");
     }
   }
 
@@ -78,7 +90,7 @@ class _HistoryState extends State<History> {
               });
             },
             decoration: InputDecoration(
-              hintText: 'Nhập nội dung bài viết...',
+              hintText: 'Nhập nội dung bài viết',
             ),
           ),
           actions: [
@@ -110,7 +122,7 @@ class _HistoryState extends State<History> {
                   print("Lỗi khi cập nhật bài viết: $e");
                 }
               },
-              child: Text('Lưu'),
+              child: Text('LÆ°u'),
             ),
           ],
         );
@@ -122,12 +134,17 @@ class _HistoryState extends State<History> {
     String postText = postController.text;
     String? imageUrl;
 
+    _logDataFlow(
+        'submit start | textLength: ${postText.length} | hasSelectedImage: ${selectedImageFile != null}');
+
     if (selectedImageFile != null) {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final ref = FirebaseStorage.instance
           .ref()
           .child('posts')
           .child('image_$timestamp.jpg');
+      _logDataFlow(
+          'upload image start | storagePath: posts/image_$timestamp.jpg');
       if (kIsWeb && selectedImageBytes != null) {
         await ref.putData(selectedImageBytes!);
       } else if (!kIsWeb) {
@@ -136,8 +153,11 @@ class _HistoryState extends State<History> {
         await ref.putData(bytes);
       }
       imageUrl = await ref.getDownloadURL();
+      _logDataFlow('upload image success | imageUrl: $imageUrl');
     }
 
+    _logDataFlow(
+        'create local Post object | author: ${widget.userModel.fullname} | imageAttached: ${imageUrl != null && imageUrl.isNotEmpty}');
     final newPost = Post(
       isHide: false,
       postId: "",
@@ -148,6 +168,7 @@ class _HistoryState extends State<History> {
       timestamp: DateTime.now().millisecondsSinceEpoch,
     );
 
+    _logDataFlow('write Firestore start | collection: posts');
     DocumentReference postRef =
         await FirebaseFirestore.instance.collection('posts').add({
       'hide': false,
@@ -167,22 +188,30 @@ class _HistoryState extends State<History> {
     });
 
     newPost.postId = postRef.id;
+    _logDataFlow('write Firestore success | new postId: ${newPost.postId}');
 
     setState(() {
       posts.insert(0, newPost);
       postController.clear();
       selectedImageFile = null;
       selectedImageBytes = null;
+      _logDataFlow(
+          'local state updated after submit | localCount: ${posts.length} | controllerCleared: ${postController.text.isEmpty}');
     });
   }
 
   Future<void> _getPosts() async {
+    _logDataFlow('fetch posts start | source: Firestore.posts');
     final querySnapshot = await FirebaseFirestore.instance
         .collection('posts')
         .orderBy('timestamp', descending: true)
         .get();
 
+    _logDataFlow(
+        'fetch posts success | rawDocCount: ${querySnapshot.docs.length}');
     final List<Post> fetchedPosts = querySnapshot.docs.map((doc) {
+      _logDataFlow(
+          'map document -> Post | postId: ${doc.id} | hasImage: ${((doc.data()['imageFileUrl'] ?? '') as String).isNotEmpty} | likes: ${doc.data()['likes'] ?? 0}');
       final String postId = doc.id;
       final bool? isHide = doc.data()['hide'];
       final String? avatarUrl = doc.data()['avatarUrl'];
@@ -217,22 +246,30 @@ class _HistoryState extends State<History> {
       );
     }).toList();
 
+    _logDataFlow('mapping finished | fetchedPosts: ${fetchedPosts.length}');
     posts = fetchedPosts;
     if (mounted) {
       setState(() {});
+      _logDataFlow(
+          'local state replaced from Firestore | localCount: ${posts.length}');
     }
   }
 
   Future<void> getImage() async {
+    _logDataFlow('pick image start | source: gallery');
     final pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       final bytes = await pickedFile.readAsBytes();
+      _logDataFlow(
+          'pick image success | fileName: ${pickedFile.name} | byteLength: ${bytes.length}');
       setState(() {
         selectedImageFile = pickedFile;
         selectedImageBytes = bytes;
       });
+    } else {
+      _logDataFlow('pick image cancelled by user');
     }
   }
 
@@ -285,7 +322,7 @@ class _HistoryState extends State<History> {
           .doc(id)
           .update({'initialLikes': isLike, "likes": likes});
     } catch (e) {
-      print("Lỗi khi cập nhật số lượt thích: $e");
+      print("Lỗi khi cập nhật lượt thích: $e");
     }
     setState(() {});
   }
@@ -298,7 +335,7 @@ class _HistoryState extends State<History> {
           .doc(id)
           .update({'hide': true});
     } catch (e) {
-      print("Lỗi khi cập nhật số lượt thích: $e");
+      print("Lỗi khi ẩn bài viết: $e");
     }
     setState(() {});
   }
@@ -310,7 +347,7 @@ class _HistoryState extends State<History> {
           .doc(id)
           .update({'hide': false});
     } catch (e) {
-      print("Lỗi khi cập nhật số lượt thích: $e");
+      print("Lỗi khi hiện lại bài viết: $e");
     }
     setState(() {});
   }
@@ -484,6 +521,8 @@ class _HistoryState extends State<History> {
                 itemCount: posts.length,
                 itemBuilder: (context, index) {
                   final post = posts[index];
+                  _logDataFlow(
+                      'delete start | index: $index | postId: ${post.postId} | localCountBefore: ${posts.length}');
                   return posts[index].isHide
                       ? Container(
                           child: Padding(
@@ -492,7 +531,7 @@ class _HistoryState extends State<History> {
                           child: RichText(
                               text: TextSpan(children: [
                             const TextSpan(
-                                text: "Bài viết đã bị ẩn .",
+                                text: "Bài viết bị báo cáo.",
                                 style: TextStyle(color: Colors.black)),
                             TextSpan(
                                 recognizer: TapGestureRecognizer()
@@ -553,7 +592,7 @@ class _HistoryState extends State<History> {
                                           return AlertDialog(
                                             title: Text('Xác nhận xóa'),
                                             content: Text(
-                                                'Bạn có chắc muốn xóa bài viết này?'),
+                                                'Bạn chắc chắn muốn xóa bài viết này?'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () {
@@ -581,15 +620,15 @@ class _HistoryState extends State<History> {
                                         context: context,
                                         builder: (BuildContext context) {
                                           return AlertDialog(
-                                            title: Text('Báo cáo!'),
+                                            title: Text('Báo cáo'),
                                             content: Text(
-                                                'Bạn đã báo cáo thành công'),
+                                                'Bài viết báo cáo thành công'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop();
                                                 },
-                                                child: Text('Đóng'),
+                                                child: Text('Đăng'),
                                               ),
                                             ],
                                           );
@@ -736,7 +775,7 @@ class _HistoryState extends State<History> {
                 });
                 Navigator.of(context).pop();
               },
-              child: Text('Đóng'),
+              child: Text('Đăng'),
             ),
           ],
         );

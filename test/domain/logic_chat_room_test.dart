@@ -7,7 +7,9 @@ void main() {
     const userA = 'user_123';
     const userB = 'user_456';
 
-    test('Nghiệp vụ: ChatRoomId phải đồng nhất (như nhau) bất kể thứ tự tham số', () {
+    test(
+        'Nghiệp vụ: ChatRoomId phải đồng nhất (như nhau) bất kể thứ tự tham số',
+        () {
       debugPrint('>>> Bắt đầu Lab: Test ChatRoom ID Logic');
 
       // 1. Thực thi: Tạo ID theo 2 cách (A-B và B-A)
@@ -19,18 +21,21 @@ void main() {
 
       // 2. Kiểm chứng: Hai ID phải giống hệt nhau
       expect(roomIdAB, equals(roomIdBA));
-      
+
       // 3. Kiểm chứng: ID trả về phải là một chuỗi UUID hợp lệ (không phải chuỗi nối đơn giản)
       // UUID v5 có độ dài cố định 36 ký tự (bao gồm dấu gạch ngang)
       expect(roomIdAB.length, equals(36));
       expect(roomIdAB.contains('-'), isTrue);
-      
-      debugPrint('Xác nhận: Logic sắp xếp ID hoạt động tốt, đảm bảo 2 người luôn vào chung 1 phòng.');
+
+      debugPrint(
+          'Xác nhận: Logic sắp xếp ID hoạt động tốt, đảm bảo 2 người luôn vào chung 1 phòng.');
     });
 
-    test('Nghiệp vụ: ChatRoomId phải thay đổi nếu một trong hai User ID khác đi', () {
+    test(
+        'Nghiệp vụ: ChatRoomId phải thay đổi nếu một trong hai User ID khác đi',
+        () {
       const userC = 'user_789';
-      
+
       final roomIdAB = ChatRoomUtil.generateChatRoomId(userA, userB);
       final roomIdAC = ChatRoomUtil.generateChatRoomId(userA, userC);
 
@@ -38,7 +43,8 @@ void main() {
       debugPrint('Room ID (A-C): $roomIdAC');
 
       expect(roomIdAB, isNot(equals(roomIdAC)));
-      debugPrint('Xác nhận: Mỗi cặp người dùng có một ID phòng chat riêng biệt.');
+      debugPrint(
+          'Xác nhận: Mỗi cặp người dùng có một ID phòng chat riêng biệt.');
     });
   });
 }

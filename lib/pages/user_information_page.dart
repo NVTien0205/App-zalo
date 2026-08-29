@@ -15,7 +15,9 @@ import "package:image_picker/image_picker.dart";
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key, required this.userModel}) : super(key: key);
+
   final UserModel userModel;
+
   @override
   // ignore: library_private_types_in_public_api
   _ProfilePageState createState() => _ProfilePageState();
@@ -26,8 +28,8 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  XFile? imageFile;     // dùng XFile thay File để hỗ trợ Web
-  Uint8List? imageBytes; // bytes cho Web
+  XFile? imageFile;
+  Uint8List? imageBytes;
   User? _user;
   String? _fullName;
   String? _profileImageUrl;
@@ -43,59 +45,61 @@ class _ProfilePageState extends State<ProfilePage> {
   void checkValues() {
     if (imageFile == null) {
       print("Xin hãy chọn ảnh trước");
-    } else {
-      _uploadProfilePicture();
+      return;
     }
+
+    _uploadProfilePicture();
   }
 
   Future<void> _uploadProfilePicture() async {
-    User? user = _auth.currentUser;
-    if (user != null && imageFile != null) {
-      try {
-        UploadTask uploadTask;
-        if (kIsWeb && imageBytes != null) {
-          uploadTask = _storage
-              .ref('profilepictures/${user.uid}.jpg')
-              .putData(imageBytes!);
-        } else {
-          // Mobile: đọc bytes từ XFile
-          final bytes = await imageFile!.readAsBytes();
-          uploadTask = _storage
-              .ref('profilepictures/${user.uid}.jpg')
-              .putData(bytes);
-        }
+    final user = _auth.currentUser;
 
-        // Get the updated download URL
-        String imageUrl = await (await uploadTask).ref.getDownloadURL();
+    if (user == null || imageFile == null) {
+      return;
+    }
 
-        // Update Firestore document with the new profile picture URL
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'profilepicture': imageUrl});
+    try {
+      UploadTask uploadTask;
 
-        setState(() {
-          _profileImageUrl = imageUrl;
-        });
-      } catch (error) {
-        print('Lỗi upload hình: $error');
+      if (kIsWeb && imageBytes != null) {
+        uploadTask = _storage
+            .ref('profilepictures/${user.uid}.jpg')
+            .putData(imageBytes!);
+      } else {
+        final bytes = await imageFile!.readAsBytes();
+        uploadTask =
+            _storage.ref('profilepictures/${user.uid}.jpg').putData(bytes);
       }
+
+      final imageUrl = await (await uploadTask).ref.getDownloadURL();
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'profilepicture': imageUrl});
+
+      setState(() {
+        _profileImageUrl = imageUrl;
+      });
+    } catch (error) {
+      print('Lỗi upload hình: $error');
     }
   }
 
   Future<void> _getUserInfo() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      // Retrieve additional user information from Firestore
-      DocumentSnapshot<Map<String, dynamic>> userInfo =
-          await _firestore.collection('users').doc(user.uid).get();
+    final user = _auth.currentUser;
 
-      setState(() {
-        _user = user;
-        _fullName = userInfo.data()?['fullname'];
-        _profileImageUrl = userInfo.data()?['profilepicture'];
-      });
+    if (user == null) {
+      return;
     }
+
+    final userInfo = await _firestore.collection('users').doc(user.uid).get();
+
+    setState(() {
+      _user = user;
+      _fullName = userInfo.data()?['fullname'];
+      _profileImageUrl = userInfo.data()?['profilepicture'];
+    });
   }
 
   void _settingDialog() {
@@ -110,6 +114,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ListTile(
                 onTap: () {
                   Navigator.pop(context);
+
                   if (widget.userModel != null) {
                     Navigator.push(
                       context,
@@ -144,69 +149,103 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void selectImage(ImageSource source) async {
-    XFile? pickedFile = await ImagePicker().pickImage(source: source);
+    final pickedFile = await ImagePicker().pickImage(source: source);
 
-    if (pickedFile != null) {
-      if (kIsWeb) {
-        // Web: không dùng image_cropper — đọc bytes trực tiếp
-        final bytes = await pickedFile.readAsBytes();
-        setState(() {
-          imageFile = pickedFile;
-          imageBytes = bytes;
-        });
-      } else {
-        // Mobile: có thể crop nếu muốn (tạm thời skip crop)
-        final bytes = await pickedFile.readAsBytes();
-        setState(() {
-          imageFile = pickedFile;
-          imageBytes = bytes;
-        });
-      }
+    if (pickedFile == null) {
+      return;
     }
+
+    final bytes = await pickedFile.readAsBytes();
+
+    setState(() {
+      imageFile = pickedFile;
+      imageBytes = bytes;
+    });
   }
 
   void showPhotoOptions() {
     showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Thay đổi ảnh đại diện"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  onTap: () {
-                    selectImage(ImageSource.gallery);
-                  },
-                  leading: const Icon(Icons.photo_album),
-                  title: const Text("Chọn ảnh từ thư viện"),
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Thay đổi ảnh đại diện"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                onTap: () {
+                  selectImage(ImageSource.gallery);
+                },
+                leading: const Icon(Icons.photo_album),
+                title: const Text("Chọn ảnh từ thư viện"),
+              ),
+              ListTile(
+                onTap: () {
+                  Navigator.pop(context);
+                  selectImage(ImageSource.camera);
+                },
+                leading: const Icon(Icons.camera_alt),
+                title: const Text("Chụp một tấm hình"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade300,
+                  shape: const StadiumBorder(),
+                  minimumSize: const Size.fromHeight(60),
                 ),
-                ListTile(
-                  onTap: () {
-                    Navigator.pop(context);
-                    selectImage(ImageSource.camera);
-                  },
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text("Chụp một tấm hình"),
+                onPressed: checkValues,
+                child: const Text(
+                  'Xác nhận đăng hình',
+                  style: TextStyle(color: Colors.black),
                 ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade300,
-                    shape: const StadiumBorder(),
-                    minimumSize: const Size.fromHeight(60),
-                  ),
-                  onPressed: () {
-                    checkValues();
-                  },
-                  child: const Text(
-                    'Xác nhận đăng hình',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                ),
-              ],
-            ),
-          );
-        });
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    if (_user == null) {
+      return const SizedBox(height: 200);
+    }
+
+    return Container(
+      height: 200,
+      decoration: const BoxDecoration(
+        color: Colors.blue,
+        image: DecorationImage(
+          image: NetworkImage(
+            'https://media.istockphoto.com/id/838406396/vector/chat-bot-and-bubble-seamless-pattern.jpg?s=612x612&w=0&k=20&c=_qJrmFqCqBCHgZHvNFhkwi8dZgIgNcpRbroeCAjTKtk=',
+          ),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: CupertinoButton(
+        onPressed: showPhotoOptions,
+        child: CircleAvatar(
+          radius: 100,
+          backgroundImage:
+              _profileImageUrl != null ? NetworkImage(_profileImageUrl!) : null,
+          backgroundColor: const Color.fromARGB(255, 83, 81, 81),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserName() {
+    if (_user == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        'Tên: $_fullName',
+        style: const TextStyle(fontSize: 18),
+      ),
+    );
   }
 
   @override
@@ -225,49 +264,15 @@ class _ProfilePageState extends State<ProfilePage> {
               Icons.settings,
               color: Colors.white,
             ),
-            onPressed: () {
-              _settingDialog();
-            },
+            onPressed: _settingDialog,
           ),
         ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            height: 200.0,
-            decoration: const BoxDecoration(
-              color: Colors.blue,
-              image: DecorationImage(
-                image: NetworkImage(
-                    'https://media.istockphoto.com/id/838406396/vector/chat-bot-and-bubble-seamless-pattern.jpg?s=612x612&w=0&k=20&c=_qJrmFqCqBCHgZHvNFhkwi8dZgIgNcpRbroeCAjTKtk='),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: _user != null
-                ? CupertinoButton(
-                    onPressed: () {
-                      showPhotoOptions();
-                    },
-                    child: CircleAvatar(
-                      radius: 100,
-                      backgroundImage: _profileImageUrl != null
-                          ? NetworkImage(_profileImageUrl!)
-                          : null,
-                      backgroundColor: const Color.fromARGB(255, 83, 81, 81),
-                    ),
-                  )
-                : Container(),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: _user != null
-                ? Text(
-                    'Tên: $_fullName',
-                    style: const TextStyle(fontSize: 18),
-                  )
-                : Container(),
-          ),
+          _buildProfileHeader(),
+          _buildUserName(),
         ],
       ),
     );

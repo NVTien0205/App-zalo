@@ -14,7 +14,7 @@ class AppRoutes {
   static const String register = '/register';
 
   static Map<String, WidgetBuilder> get routes => {
-    login: (context) => LoginPage(),
-    register: (context) => RegisterPage(),
-  };
+        login: (context) => LoginPage(),
+        register: (context) => RegisterPage(),
+      };
 }

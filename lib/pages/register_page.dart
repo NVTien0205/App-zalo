@@ -1,98 +1,147 @@
-// ignore_for_file: file_names, avoid_print
+// ignore_for_file: file_names
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import "package:flutter/material.dart";
-import 'package:chat_app/components/password_text_field.dart';
 import 'package:chat_app/components/email_text_field.dart';
+import 'package:chat_app/components/password_text_field.dart';
+import 'package:chat_app/core/utils/validators.dart';
+import 'package:chat_app/core/widgets/app_snack_bar.dart';
 import 'package:chat_app/models/user_model.dart';
 import 'package:chat_app/pages/confirm_account_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 // ignore: must_be_immutable
 class RegisterPage extends StatelessWidget {
   RegisterPage({Key? key}) : super(key: key);
-  TextEditingController passwordController = TextEditingController();
-  TextEditingController confirmPasswordController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
 
-  final RegExp _emailRegex = RegExp(r"^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$");
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+  final TextEditingController emailController = TextEditingController();
 
-  void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  String _mapAuthError(FirebaseAuthException ex) {
+    switch (ex.code) {
+      case 'email-already-in-use':
+        return 'Email này đã được sử dụng để đăng ký!';
+      case 'weak-password':
+        return 'Mật khẩu quá yếu, vui lòng chọn mật khẩu khác!';
+      case 'invalid-email':
+        return 'Email không hợp lệ!';
+      case 'too-many-requests':
+        return 'Thiết bị đang bị chặn tạm thời do thử quá nhiều lần. Vui lòng thử lại sau.';
+      case 'network-request-failed':
+        return 'Lỗi kết nối mạng, vui lòng thử lại!';
+      default:
+        return 'Đăng ký thất bại, vui lòng thử lại sau!';
+    }
   }
 
   void checkValues(BuildContext context) {
-    String email = emailController.text.trim();
-    String password = passwordController.text.trim();
-    String cPassword = confirmPasswordController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
 
-    if (email == "" || password == "" || cPassword == "") {
-      _showSnack(context, "Vui lòng đừng để trống các ô!");
-    } else if (!_emailRegex.hasMatch(email)) {
-      _showSnack(context, "Email không đúng định dạng!");
-    } else if (password.length < 6) {
-      _showSnack(context, "Mật khẩu phải có ít nhất 6 ký tự!");
-    } else if (password != cPassword) {
-      _showSnack(context, "Mật khẩu xác nhận không trùng khớp!");
-    } else {
-      signUp(email, password, context);
+    final emailError = Validators.validateEmail(email);
+    if (emailError != null) {
+      showAppSnackBar(context, emailError);
+      return;
     }
+
+    final passwordError = Validators.validatePassword(password);
+    if (passwordError != null) {
+      showAppSnackBar(context, passwordError);
+      return;
+    }
+
+    final confirmPasswordError = Validators.validateConfirmPassword(
+      password,
+      confirmPassword,
+    );
+    if (confirmPasswordError != null) {
+      showAppSnackBar(context, confirmPasswordError);
+      return;
+    }
+
+    signUp(email, password, context);
   }
 
   Future<void> signUp(
-      String email, String password, BuildContext context) async {
-    UserCredential? credential;
+    String email,
+    String password,
+    BuildContext context,
+  ) async {
+    UserCredential credential;
+
     try {
-      credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
-    } on FirebaseAuthException catch (ex) {
-      String message;
-      switch (ex.code) {
-        case "email-already-in-use":
-          message = "Email này đã được sử dụng để đăng ký!";
-          break;
-        case "weak-password":
-          message = "Mật khẩu quá yếu, vui lòng chọn mật khẩu khác!";
-          break;
-        case "invalid-email":
-          message = "Email không hợp lệ!";
-          break;
-        case "network-request-failed":
-          message = "Lỗi kết nối mạng, vui lòng thử lại!";
-          break;
-        default:
-          message = "Đăng ký thất bại, vui lòng thử lại sau!";
-      }
-      if (!context.mounted) return;
-      _showSnack(context, message);
-    }
-
-    if (credential != null) {
-      String uid = credential.user!.uid;
-      UserModel newUser = UserModel(
-        uid: uid,
+      credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
-        fullname: "",
-        profilepicture: "",
-        friendList: [],
+        password: password,
       );
-      await FirebaseFirestore.instance
-          .collection("users")
-          .doc(uid)
-          .set(newUser.toMap());
-
-      print("Đăng ký thành công!");
-
+    } on FirebaseAuthException catch (ex) {
       if (!context.mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) {
-        return ConfirmAccount(
-          firebaseUser: credential!.user!,
-          userModel: newUser,
-        );
-      }));
+      showAppSnackBar(context, _mapAuthError(ex));
+      return;
+    } catch (e) {
+      debugPrint('Register debug -> unexpected auth error: $e');
+      if (!context.mounted) return;
+      showAppSnackBar(context, 'Đăng ký thất bại, vui lòng thử lại sau!');
+      return;
     }
+
+    final firebaseUser = credential.user;
+    if (firebaseUser == null) {
+      if (!context.mounted) return;
+      showAppSnackBar(context, 'Không thể khởi tạo tài khoản sau khi đăng ký.');
+      return;
+    }
+
+    final newUser = UserModel(
+      uid: firebaseUser.uid,
+      email: email,
+      fullname: '',
+      profilepicture: '',
+      friendList: [],
+    );
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .set(newUser.toMap());
+    } on FirebaseException catch (ex) {
+      debugPrint('Register debug -> firestore error: ${ex.message}');
+      if (!context.mounted) return;
+      showAppSnackBar(
+        context,
+        ex.message ??
+            'Đăng ký tài khoản xong nhưng chưa tạo được hồ sơ người dùng.',
+      );
+      return;
+    } catch (e) {
+      debugPrint('Register debug -> unexpected firestore error: $e');
+      if (!context.mounted) return;
+      showAppSnackBar(
+        context,
+        'Đăng ký tài khoản xong nhưng chưa tạo được hồ sơ người dùng.',
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    showAppSnackBar(context, 'Đăng ký thành công. Mời bạn hoàn tất hồ sơ.');
+
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (!context.mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ConfirmAccount(
+          firebaseUser: firebaseUser,
+          userModel: newUser,
+        ),
+      ),
+    );
   }
 
   @override
@@ -101,17 +150,12 @@ class RegisterPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 30, 88, 235),
         title: const Text(
-          "Tạo tài khoản",
-          style: TextStyle(
-            color: Colors.white,
-          ),
+          'Tạo tài khoản',
+          style: TextStyle(color: Colors.white),
         ),
         automaticallyImplyLeading: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -121,50 +165,42 @@ class RegisterPage extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(children: [
-              const SizedBox(height: 25.0),
-
-              //Phone number textfield
-
-              MyEmailTextField(
-                controller: emailController,
-              ),
-              const SizedBox(height: 20.0),
-
-              //Password textfield
-
-              MyPasswordTextField(
-                  controller: passwordController, myText: "Mật khẩu"),
-              const SizedBox(height: 20.0),
-
-              //Confirm password
-              MyPasswordTextField(
+            child: Column(
+              children: [
+                const SizedBox(height: 25.0),
+                MyEmailTextField(controller: emailController),
+                const SizedBox(height: 20.0),
+                MyPasswordTextField(
+                  controller: passwordController,
+                  myText: 'Mật khẩu',
+                ),
+                const SizedBox(height: 20.0),
+                MyPasswordTextField(
                   controller: confirmPasswordController,
-                  myText: "Xác nhận mật khẩu"),
-              const SizedBox(height: 20.0),
-              //Dieu khoan cua app
-
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Những lưu ý khi đặt tên:",
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Text("- Đặt tên phù hợp với"),
-                      SizedBox(width: 5),
-                      Text("điều khoản của Zalo",
-                          style: TextStyle(color: Colors.blue))
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                      "- Sử dụng tên thật để mọi người dễ nhận ra bạn"),
-                ],
-              ),
-            ]),
+                  myText: 'Xác nhận mật khẩu',
+                ),
+                const SizedBox(height: 20.0),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Những lưu ý khi đặt tên:'),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Text('- Đặt tên phù hợp với'),
+                        SizedBox(width: 5),
+                        Text(
+                          'điều khoản của Zalo',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Text('- Sử dụng tên thật để mọi người dễ nhận ra bạn'),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -1,14 +1,19 @@
-// ignore_for_file: file_names
-
 class MessageModel {
   String? messageid;
   String? sender;
   String? text;
   bool? seen;
   String? createdon;
+  String? imageUrl;
 
-  MessageModel(
-      {this.messageid, this.createdon, this.seen, this.sender, this.text});
+  MessageModel({
+    this.messageid,
+    this.createdon,
+    this.seen,
+    this.sender,
+    this.text,
+    this.imageUrl,
+  });
 
   MessageModel.fromMap(Map<String, dynamic> map) {
     messageid = map["messageid"];
@@ -16,6 +21,7 @@ class MessageModel {
     text = map["text"];
     seen = map["seen"];
     createdon = map["createdon"];
+    imageUrl = map["imageUrl"];
   }
 
   Map<String, dynamic> toMap() {
@@ -25,6 +31,7 @@ class MessageModel {
       "text": text,
       "seen": seen,
       "createdon": createdon,
+      "imageUrl": imageUrl,
     };
   }
 }

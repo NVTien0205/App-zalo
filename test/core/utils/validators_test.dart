@@ -17,8 +17,7 @@ void main() {
     });
 
     test('sai định dạng (thiếu domain) -> báo lỗi định dạng', () {
-      expect(
-          Validators.validateEmail("abc@"), "Email không đúng định dạng!");
+      expect(Validators.validateEmail("abc@"), "Email không đúng định dạng!");
     });
 
     test('email hợp lệ -> null', () {
@@ -30,10 +29,9 @@ void main() {
     });
   });
 
-    group('validatePassword', () {
+  group('validatePassword', () {
     test('rỗng -> báo lỗi trống ô', () {
-      expect(
-          Validators.validatePassword(""), "Vui lòng đừng để trống các ô!");
+      expect(Validators.validatePassword(""), "Vui lòng đừng để trống các ô!");
     });
 
     test('ít hơn 10 ký tự -> báo lỗi độ dài', () {
@@ -50,7 +48,9 @@ void main() {
           "Mật khẩu phải chứa ít nhất 1 chữ số!");
     });
 
-    test('đủ 10 ký tự, có số nhưng thiếu ký tự đặc biệt -> báo lỗi thiếu ký tự đặc biệt', () {
+    test(
+        'đủ 10 ký tự, có số nhưng thiếu ký tự đặc biệt -> báo lỗi thiếu ký tự đặc biệt',
+        () {
       expect(Validators.validatePassword("Abcdefgh12"),
           "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt!");
     });
@@ -75,7 +75,8 @@ void main() {
       expect(Validators.validateConfirmPassword("123456", "123456"), null);
     });
 
-    test('password null, confirm rỗng -> báo lỗi trống ô (ưu tiên check rỗng trước)',
+    test(
+        'password null, confirm rỗng -> báo lỗi trống ô (ưu tiên check rỗng trước)',
         () {
       expect(Validators.validateConfirmPassword(null, ""),
           "Vui lòng đừng để trống các ô!");
