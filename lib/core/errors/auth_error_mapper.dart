@@ -48,6 +48,11 @@ class AuthErrorMapper {
           code: "user-disabled",
           message: "Tài khoản đã bị vô hiệu hóa",
         );
+      case 'requires-recent-login':
+        return const AppError(
+          code: 'requires-recent-login',
+          message: 'Phiên đăng nhập đã cũ, vui lòng đăng nhập lại để tiếp tục!',
+        );
       // Các mã lỗi ít gặp khác có thể bổ sung dần sau
       default:
         return AppError(

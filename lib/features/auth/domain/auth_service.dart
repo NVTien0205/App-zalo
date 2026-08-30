@@ -15,4 +15,11 @@ abstract interface class AuthService {
   Future<Result<void>> signOut();
 
   Future<Result<void>> resetPassword({required String email});
+
+  Future<Result<void>> changePassword({
+    required String currentPassword,
+    required String newPassword
+  });
 }
+
+enum AuthStatus { idle, loading, success, failure } 

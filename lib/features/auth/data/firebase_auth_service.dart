@@ -2,6 +2,7 @@
 import 'package:chat_app/core/errors/result.dart';
 import 'package:chat_app/core/errors/auth_error_mapper.dart';
 import 'package:chat_app/features/auth/domain/auth_service.dart';
+import 'package:chat_app/core/errors/app_error.dart';
 
 /// Implementation thật của AuthService, gọi trực tiếp Firebase Auth SDK.
 /// Đổi tên từ auth_service.dart cũ (T-06 gốc) sang đây khi nâng cấp thành
@@ -48,6 +49,31 @@ class FirebaseAuthService implements AuthService {
   Future<Result<void>> signOut() async {
     try {
       await _firebaseAuth.signOut();
+      return const Success(null);
+    } on FirebaseAuthException catch (ex) {
+      return Failure(AuthErrorMapper.map(ex.code));
+    }
+  }
+
+  @override
+  Future<Result<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null || user.email == null) {
+        return const Failure(AppError(
+          code: 'no-current-user',
+          message: 'Không tìm thấy phiên đăng nhập hiện tại.',
+        ));
+      }
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
       return const Success(null);
     } on FirebaseAuthException catch (ex) {
       return Failure(AuthErrorMapper.map(ex.code));
