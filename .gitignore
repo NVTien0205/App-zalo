@@ -105,3 +105,6 @@ android/app/google-services.json
 
 # Personal setup notes — not for the shared repo
 Doc/
+# Legacy articles pages — giữ tham khảo local, đã thay bằng MVVM feature/articles
+lib/pages/articles/
+lib/pages/articles_page.dart
