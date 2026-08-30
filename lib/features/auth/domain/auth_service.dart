@@ -21,5 +21,3 @@ abstract interface class AuthService {
     required String newPassword
   });
 }
-
-enum AuthStatus { idle, loading, success, failure } 

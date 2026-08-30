@@ -1,5 +1,5 @@
 import 'package:chat_app/core/errors/app_error.dart';
-import 'package:chat_app/features/auth/domain/auth_service.dart';
+import 'package:chat_app/features/auth/domain/auth_status.dart';
 
 class RegisterState {
   final AuthStatus status;

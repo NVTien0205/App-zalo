@@ -5,23 +5,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreUserRepository implements UserRepository {
   final FirebaseFirestore _firestore;
-  FirestoreUserRepository({ FirebaseFirestore? firstore})
-    : _firestore = firstore ?? FirebaseFirestore.instance;
-
+  FirestoreUserRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<Result<void>> updateFullName({
-    required String uid,
-    required String newFullName
-  }) async {
+  Future<Result<void>> updateFullName(
+      {required String uid, required String newFullName}) async {
     try {
-      await _firestore.collection('users').doc(uid).update({'fullname' : newFullName});
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .update({'fullname': newFullName});
       return const Success(null);
     } on FirebaseException catch (ex) {
       return Failure(AppError(
-        code: ex.code,
-        message: ex.message ?? 'Không thể cập nhật tên, vui lòng thử lại.'
-      ));
+          code: ex.code,
+          message: ex.message ?? 'Không thể cập nhật tên, vui lòng thử lại.'));
     }
   }
 }
