@@ -1,29 +1,34 @@
-// ignore_for_file: use_key_in_widget_constructors, unused_element, prefer_const_constructors, use_build_context_synchronously, unnecessary_null_comparison, avoid_unnecessary_containers, prefer_const_literals_to_create_immutables, sized_box_for_whitespace, avoid_print, library_private_types_in_public_api, unused_import
-import 'package:chat_app/models/user_model.dart';
+// ignore_for_file: file_names, avoid_print
+
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/gestures.dart';
+
+import 'package:chat_app/models/articles_model.dart';
+import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/pages/articles/article_dialogs.dart';
+import 'package:chat_app/pages/articles/article_service.dart';
+import 'package:chat_app/pages/articles/widgets/article_composer_section.dart';
+import 'package:chat_app/pages/articles/widgets/article_post_card.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 class History extends StatefulWidget {
   final UserModel userModel;
 
   const History({super.key, required this.userModel});
+
   @override
-  _HistoryState createState() => _HistoryState();
+  State<History> createState() => _HistoryState();
 }
 
 class _HistoryState extends State<History> {
+  final ArticleService _articleService = ArticleService();
+
   bool isSearchActivated = false;
   String searchText = '';
   List<Post> posts = [];
   late TextEditingController postController;
-  XFile? selectedImageFile; 
-  Uint8List? selectedImageBytes; 
+  XFile? selectedImageFile;
+  Uint8List? selectedImageBytes;
   bool _isExpanded = false;
 
   void _logDataFlow(String message) {
@@ -43,216 +48,148 @@ class _HistoryState extends State<History> {
     _getPosts();
   }
 
-  void deletePost(int index) async {
+  @override
+  void dispose() {
+    postController.dispose();
+    super.dispose();
+  }
+
+  Future<void> deletePost(int index) async {
     try {
       final post = posts[index];
       _logDataFlow(
-          'delete start | index: $index | postId: ${post.postId} | localCountBefore: ${posts.length}');
-      // Kiểm tra xem tài liệu có tồn tại trước khi cố gắng xóa
-      DocumentSnapshot postSnapshot = await FirebaseFirestore.instance
-          .collection('posts')
-          .doc(post.postId)
-          .get();
-      debugPrint('khởi tạo và lấy postId từ tài liệu -> xem tài liệu');
+        'delete start | index: $index | postId: ${post.postId} | localCountBefore: ${posts.length}',
+      );
+
+      final deleted = await _articleService.deletePostById(post.postId);
+
       _logDataFlow(
-          'delete fetch document | postId: ${post.postId} | exists: ${postSnapshot.exists}');
-      if (postSnapshot.exists) {
-        // Tài liệu tồn tại, tiếp tục xóa
-        await FirebaseFirestore.instance
-            .collection('posts')
-            .doc(post.postId)
-            .delete();
-        setState(() {
-          posts.removeAt(index);
-          _logDataFlow(
-              'delete success | removed postId: ${post.postId} | localCountAfter: ${posts.length}');
-          debugPrint('Xóa bài viết thành công');
-        });
-      } else {
-        debugPrint("Tài liệu không tồn tại");
+        'delete fetch document | postId: ${post.postId} | exists: $deleted',
+      );
+
+      if (!deleted) {
+        debugPrint('Tài liệu không tồn tại');
+        return;
       }
+
+      if (!mounted) return;
+
+      setState(() {
+        posts.removeAt(index);
+      });
+
+      _logDataFlow(
+        'delete success | removed postId: ${post.postId} | localCountAfter: ${posts.length}',
+      );
     } catch (e) {
-      debugPrint("Lỗi khi xóa bài viết: $e");
+      debugPrint('Lỗi khi xóa bài viết: $e');
     }
   }
 
-  void editPost(int index) {
-    showDialog(
+  Future<void> editPost(int index) async {
+    await showEditPostDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Chỉnh sửa bài viết'),
-          content: TextField(
-            controller: TextEditingController(text: posts[index].content),
-            onChanged: (value) {
-              setState(() {
-                posts[index].content = value;
-              });
-            },
-            decoration: InputDecoration(
-              hintText: 'Nhập nội dung bài viết',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                try {
-                  // Kiểm tra xem tài liệu có tồn tại trước khi cố gắng cập nhật
-                  DocumentSnapshot postSnapshot = await FirebaseFirestore
-                      .instance
-                      .collection('posts')
-                      .doc(posts[index].timestamp.toString())
-                      .get();
+      initialContent: posts[index].content,
+      onChanged: (value) {
+        posts[index].content = value;
+      },
+      onSave: (value) async {
+        try {
+          final post = posts[index];
+          final updated = await _articleService.updatePostContent(
+            postId: post.postId,
+            content: value,
+          );
 
-                  if (postSnapshot.exists) {
-                    // Tài liệu tồn tại, tiếp tục cập nhật
-                    final newContent = posts[index].content;
-                    final timestamp = posts[index].timestamp;
+          if (!updated) {
+            debugPrint('Tài liệu không tồn tại.');
+            return;
+          }
 
-                    await FirebaseFirestore.instance
-                        .collection('posts')
-                        .doc(timestamp.toString())
-                        .update({'content': newContent});
-
-                    Navigator.of(context).pop();
-                  } else {
-                    print("Tài liệu không tồn tại.");
-                  }
-                } catch (e) {
-                  print("Lỗi khi cập nhật bài viết: $e");
-                }
-              },
-              child: Text('LÆ°u'),
-            ),
-          ],
-        );
+          if (!mounted) return;
+          setState(() {
+            posts[index].content = value;
+          });
+        } catch (e) {
+          debugPrint('Lỗi khi cập nhật bài viết: $e');
+        }
       },
     );
   }
 
   Future<void> _submitForm() async {
-    String postText = postController.text;
+    final postText = postController.text.trim();
     String? imageUrl;
 
+    if (postText.isEmpty && selectedImageFile == null) {
+      return;
+    }
+
     _logDataFlow(
-        'submit start | textLength: ${postText.length} | hasSelectedImage: ${selectedImageFile != null}');
+      'submit start | textLength: ${postText.length} | hasSelectedImage: ${selectedImageFile != null}',
+    );
 
     if (selectedImageFile != null) {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('posts')
-          .child('image_$timestamp.jpg');
       _logDataFlow(
-          'upload image start | storagePath: posts/image_$timestamp.jpg');
-      if (kIsWeb && selectedImageBytes != null) {
-        await ref.putData(selectedImageBytes!);
-      } else if (!kIsWeb) {
-        // Mobile: dùng putData từ bytes đọc được
-        final bytes = await selectedImageFile!.readAsBytes();
-        await ref.putData(bytes);
-      }
-      imageUrl = await ref.getDownloadURL();
+          'upload image start | source: ArticleService.uploadPostImage');
+      imageUrl = await _articleService.uploadPostImage(
+        selectedImageFile: selectedImageFile!,
+        selectedImageBytes: selectedImageBytes,
+      );
       _logDataFlow('upload image success | imageUrl: $imageUrl');
     }
 
     _logDataFlow(
-        'create local Post object | author: ${widget.userModel.fullname} | imageAttached: ${imageUrl != null && imageUrl.isNotEmpty}');
-    final newPost = Post(
-      isHide: false,
-      postId: "",
-      avatarUrl: widget.userModel.profilepicture!,
-      authorName: widget.userModel.fullname!,
-      content: postText,
-      imageFileUrl: imageUrl ?? "",
-      timestamp: DateTime.now().millisecondsSinceEpoch,
+      'create local Post object | author: ${widget.userModel.fullname} | imageAttached: ${imageUrl != null && imageUrl.isNotEmpty}',
     );
 
     _logDataFlow('write Firestore start | collection: posts');
-    DocumentReference postRef =
-        await FirebaseFirestore.instance.collection('posts').add({
-      'hide': false,
-      'avatarUrl': newPost.avatarUrl,
-      'authorName': newPost.authorName,
-      'content': newPost.content,
-      'imageFileUrl': imageUrl,
-      'likes': newPost.likes,
-      'initialLikes': newPost.initialLikes,
-      'comments': newPost.comments.map((comment) {
-        return {
-          'authorName': comment.authorName,
-          'text': comment.text,
-        };
-      }).toList(),
-      'timestamp': newPost.timestamp,
-    });
-
-    newPost.postId = postRef.id;
+    final newPost = await _articleService.createPost(
+      userModel: widget.userModel,
+      postText: postText,
+      imageUrl: imageUrl,
+    );
     _logDataFlow('write Firestore success | new postId: ${newPost.postId}');
+
+    if (!mounted) return;
 
     setState(() {
       posts.insert(0, newPost);
       postController.clear();
       selectedImageFile = null;
       selectedImageBytes = null;
-      _logDataFlow(
-          'local state updated after submit | localCount: ${posts.length} | controllerCleared: ${postController.text.isEmpty}');
     });
+
+    _logDataFlow(
+      'local state updated after submit | localCount: ${posts.length} | controllerCleared: ${postController.text.isEmpty}',
+    );
   }
 
   Future<void> _getPosts() async {
-    _logDataFlow('fetch posts start | source: Firestore.posts');
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('posts')
-        .orderBy('timestamp', descending: true)
-        .get();
+    _logDataFlow('fetch posts start | source: ArticleService.fetchPosts');
+    final fetchedPosts = await _articleService.fetchPosts();
 
     _logDataFlow(
-        'fetch posts success | rawDocCount: ${querySnapshot.docs.length}');
-    final List<Post> fetchedPosts = querySnapshot.docs.map((doc) {
+      'fetch posts success | rawDocCount: ${fetchedPosts.length}',
+    );
+
+    for (final post in fetchedPosts) {
       _logDataFlow(
-          'map document -> Post | postId: ${doc.id} | hasImage: ${((doc.data()['imageFileUrl'] ?? '') as String).isNotEmpty} | likes: ${doc.data()['likes'] ?? 0}');
-      final String postId = doc.id;
-      final bool? isHide = doc.data()['hide'];
-      final String? avatarUrl = doc.data()['avatarUrl'];
-      final String? authorName = doc.data()['authorName'];
-      final String? content = doc.data()['content'];
-      final String? imageFileUrl = doc.data()['imageFileUrl'];
-      final int? likes = doc.data()['likes'];
-      final bool? initialLikes = doc.data()['initialLikes'];
-      final List<dynamic>? commentsData = doc.data()['comments'];
-      final int? timestamp = doc.data()['timestamp'];
-
-      final List<Comment> comments = commentsData != null
-          ? commentsData.map<Comment>((comment) {
-              return Comment(
-                authorName: comment['authorName'] ?? '',
-                text: comment['text'] ?? '',
-              );
-            }).toList()
-          : [];
-
-      return Post(
-        postId: postId,
-        isHide: isHide ?? false,
-        avatarUrl: avatarUrl ?? '',
-        authorName: authorName ?? '',
-        content: content ?? '',
-        imageFileUrl: imageFileUrl ?? '',
-        likes: likes ?? 0,
-        initialLikes: initialLikes ?? false,
-        comments: comments,
-        timestamp: timestamp ?? 0,
+        'map document -> Post | postId: ${post.postId} | hasImage: ${post.imageFileUrl.isNotEmpty} | likes: ${post.likes}',
       );
-    }).toList();
+    }
 
     _logDataFlow('mapping finished | fetchedPosts: ${fetchedPosts.length}');
-    posts = fetchedPosts;
-    if (mounted) {
-      setState(() {});
-      _logDataFlow(
-          'local state replaced from Firestore | localCount: ${posts.length}');
-    }
+
+    if (!mounted) return;
+
+    setState(() {
+      posts = fetchedPosts;
+    });
+
+    _logDataFlow(
+      'local state replaced from Firestore | localCount: ${posts.length}',
+    );
   }
 
   Future<void> getImage() async {
@@ -260,570 +197,215 @@ class _HistoryState extends State<History> {
     final pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
-      _logDataFlow(
-          'pick image success | fileName: ${pickedFile.name} | byteLength: ${bytes.length}');
-      setState(() {
-        selectedImageFile = pickedFile;
-        selectedImageBytes = bytes;
-      });
-    } else {
+    if (pickedFile == null) {
       _logDataFlow('pick image cancelled by user');
+      return;
     }
+
+    final bytes = await pickedFile.readAsBytes();
+    _logDataFlow(
+      'pick image success | fileName: ${pickedFile.name} | byteLength: ${bytes.length}',
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      selectedImageFile = pickedFile;
+      selectedImageBytes = bytes;
+    });
   }
 
   void addComment(int index, String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+
     setState(() {
       final comment = Comment(
-        authorName: widget.userModel.fullname!,
-        text: text,
+        authorName: widget.userModel.fullname ?? '',
+        text: trimmed,
       );
       posts[index].comments.add(comment);
     });
   }
 
-  void showComments(int index) {
-    showDialog(
+  Future<void> showComments(int index) async {
+    await showCommentsDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Bình luận'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final comment in posts[index].comments)
-                ListTile(
-                  title: Text(comment.authorName),
-                  subtitle: Text(comment.text),
-                ),
-              TextField(
-                onSubmitted: (text) {
-                  addComment(index, text);
-                  Navigator.of(context).pop();
-                },
-                decoration: InputDecoration(
-                  hintText: 'Thêm bình luận...',
-                ),
-              ),
-            ],
-          ),
-        );
+      commentTiles: posts[index]
+          .comments
+          .map(
+            (comment) => ListTile(
+              title: Text(comment.authorName),
+              subtitle: Text(comment.text),
+            ),
+          )
+          .toList(),
+      onSubmitted: (text) {
+        addComment(index, text);
       },
     );
   }
 
-  //add like
-  void updateLikesInFirestore(
-      int index, bool isLike, String id, int likes) async {
+  Future<void> updateLikesInFirestore(String id, bool isLike, int likes) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .doc(id)
-          .update({'initialLikes': isLike, "likes": likes});
+      await _articleService.updateLikes(
+        postId: id,
+        isLike: isLike,
+        likes: likes,
+      );
     } catch (e) {
-      print("Lỗi khi cập nhật lượt thích: $e");
+      print('Lỗi khi cập nhật lượt thích: $e');
     }
-    setState(() {});
   }
 
-  //hide post
-  void hidePost(int index, String id) async {
+  Future<void> hidePost(String id) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .doc(id)
-          .update({'hide': true});
+      await _articleService.setPostHidden(postId: id, hide: true);
     } catch (e) {
-      print("Lỗi khi ẩn bài viết: $e");
+      print('Lỗi khi ẩn bài viết: $e');
     }
-    setState(() {});
   }
 
-  void reHidePost(int index, String id) async {
+  Future<void> reHidePost(String id) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .doc(id)
-          .update({'hide': false});
+      await _articleService.setPostHidden(postId: id, hide: false);
     } catch (e) {
-      print("Lỗi khi hiện lại bài viết: $e");
+      print('Lỗi khi hiện lại bài viết: $e');
     }
-    setState(() {});
+  }
+
+  Future<void> _togglePostVisibility(int index) async {
+    final post = posts[index];
+    if (post.isHide) {
+      await reHidePost(post.postId);
+    } else {
+      await hidePost(post.postId);
+    }
+    await _getPosts();
+  }
+
+  Future<void> _togglePostLike(int index) async {
+    final post = posts[index];
+    final isLike = !post.initialLikes;
+    final likes = isLike ? post.likes + 1 : post.likes - 1;
+
+    setState(() {
+      post.initialLikes = isLike;
+      post.likes = likes;
+    });
+
+    await updateLikesInFirestore(post.postId, isLike, likes);
+  }
+
+  Future<void> _handlePostMenuAction(int index, String value) async {
+    if (value == 'edit') {
+      await editPost(index);
+      return;
+    }
+
+    if (value == 'delete') {
+      final shouldDelete = await showDeletePostDialog(context);
+      if (shouldDelete) {
+        await deletePost(index);
+      }
+      return;
+    }
+
+    if (value == 'hide' || value == 'reHide') {
+      await _togglePostVisibility(index);
+      return;
+    }
+
+    if (value == 'report') {
+      await showReportDialog(context);
+    }
+  }
+
+  Future<void> showSearchBar() async {
+    await showSearchDialog(
+      context: context,
+      onChanged: (value) {
+        setState(() {
+          searchText = value;
+        });
+      },
+      onClose: () {
+        setState(() {
+          isSearchActivated = false;
+        });
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 10,
+            ArticleComposerSection(
+              userModel: widget.userModel,
+              postController: postController,
+              onPickImage: getImage,
+              onSubmit: _submitForm,
+              onCreateAlbum: () {},
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                SizedBox(width: 15),
-                CircleAvatar(
-                  radius: 22,
-                  backgroundImage:
-                      NetworkImage(widget.userModel.profilepicture!),
-                ),
-                SizedBox(width: 4),
-                Container(
-                  padding: EdgeInsets.only(left: 12, top: 8),
-                  height: 70,
-                  width: 270,
-                  child: TextField(
-                    controller: postController,
-                    maxLines: null,
-                    decoration: InputDecoration(
-                      hintText: 'Nhập nội dung bài đăng...',
-                      border: InputBorder.none,
-                    ),
-                  ),
-                )
-              ],
-            ),
-            SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    child: InkWell(
-                      onTap: () {
-                        getImage();
-                      },
-                      borderRadius: BorderRadius.circular(21),
-                      child: Ink(
-                        height: 35,
-                        decoration: BoxDecoration(
-                            shape: BoxShape.rectangle,
-                            borderRadius: BorderRadius.circular(21),
-                            color: Color.fromARGB(255, 246, 240, 240)),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.photo_rounded,
-                                size: 23,
-                                color: Colors.green,
-                              ),
-                              SizedBox(
-                                width: 3,
-                              ),
-                              Text('Đăng ảnh'),
-                            ]),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    child: InkWell(
-                      onTap: () {
-                        _submitForm();
-                      },
-                      borderRadius: BorderRadius.circular(21),
-                      child: Ink(
-                        height: 35,
-                        decoration: BoxDecoration(
-                            shape: BoxShape.rectangle,
-                            borderRadius: BorderRadius.circular(21),
-                            color: Color.fromARGB(255, 246, 240, 240)),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.post_add_rounded,
-                                size: 23,
-                                color: Colors.red,
-                              ),
-                              SizedBox(
-                                width: 3,
-                              ),
-                              Text('Đăng bài'),
-                            ]),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    child: InkWell(
-                      onTap: () {},
-                      borderRadius: BorderRadius.circular(21),
-                      child: Ink(
-                        height: 35,
-                        decoration: BoxDecoration(
-                            shape: BoxShape.rectangle,
-                            borderRadius: BorderRadius.circular(21),
-                            color: Color.fromARGB(255, 246, 240, 240)),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.photo_camera_back_outlined,
-                                size: 23,
-                                color: Colors.deepPurpleAccent[700],
-                              ),
-                              SizedBox(
-                                width: 3,
-                              ),
-                              Text('Tạo album'),
-                            ]),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 12,
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Container(
               height: 10,
-              color: Color.fromARGB(255, 236, 236, 236),
+              color: const Color.fromARGB(255, 236, 236, 236),
             ),
             if (selectedImageFile != null)
-              Container(
+              SizedBox(
                 width: screenWidth,
                 child: selectedImageBytes != null
                     ? Image.memory(selectedImageBytes!, fit: BoxFit.cover)
-                    : const SizedBox(),
+                    : const SizedBox.shrink(),
               ),
             SizedBox(
               height: 800,
               child: ListView.separated(
-                separatorBuilder: (context, index) => Divider(
+                separatorBuilder: (context, index) => const Divider(
                   color: Color.fromARGB(255, 236, 236, 236),
-                  thickness: 10.0,
+                  thickness: 10,
                   height: 0,
                 ),
                 itemCount: posts.length,
                 itemBuilder: (context, index) {
                   final post = posts[index];
-                  _logDataFlow(
-                      'delete start | index: $index | postId: ${post.postId} | localCountBefore: ${posts.length}');
-                  return posts[index].isHide
-                      ? Container(
-                          child: Padding(
-                          padding: const EdgeInsets.only(
-                              bottom: 20, top: 10, left: 10, right: 10),
-                          child: RichText(
-                              text: TextSpan(children: [
-                            const TextSpan(
-                                text: "Bài viết bị báo cáo.",
-                                style: TextStyle(color: Colors.black)),
-                            TextSpan(
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    reHidePost(index, posts[index].postId);
-                                    _getPosts();
-                                    setState(() {});
-                                  },
-                                text: "Hiển thị lại bài viết",
-                                style: const TextStyle(color: Colors.blue))
-                          ])),
-                        ))
-                      : Column(children: [
-                          SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(
-                                    left: 8), // Add left padding here
-                                child: CircleAvatar(
-                                  radius: 16,
-                                  backgroundImage: NetworkImage(post.avatarUrl),
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      post.authorName,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatTimestamp(post.timestamp),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: PopupMenuButton<String>(
-                                  onSelected: (value) {
-                                    if (value == 'edit') {
-                                      editPost(index);
-                                    } else if (value == 'delete') {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text('Xác nhận xóa'),
-                                            content: Text(
-                                                'Bạn chắc chắn muốn xóa bài viết này?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  deletePost(index);
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: Text('Xóa'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: Text('Hủy'),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    } else if (value == 'hide') {
-                                      hidePost(index, posts[index].postId);
-                                      _getPosts();
-                                      setState(() {});
-                                    } else if (value == 'report') {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text('Báo cáo'),
-                                            content: Text(
-                                                'Bài viết báo cáo thành công'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: Text('Đăng'),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    } else if (value == "reHide") {
-                                      reHidePost(index, posts[index].postId);
-                                      _getPosts();
-                                      setState(() {});
-                                    }
-                                  },
-                                  itemBuilder: (BuildContext context) =>
-                                      <PopupMenuEntry<String>>[
-                                    const PopupMenuItem<String>(
-                                      value: 'edit',
-                                      child: Text('Chỉnh sửa bài viết'),
-                                    ),
-                                    const PopupMenuItem<String>(
-                                      value: 'delete',
-                                      child: Text('Xóa bài viết'),
-                                    ),
-                                    const PopupMenuItem<String>(
-                                      value: 'report',
-                                      child: Text('Báo cáo bài viết'),
-                                    ),
-                                    PopupMenuItem<String>(
-                                      value: posts[index].isHide
-                                          ? 'reHide'
-                                          : 'hide',
-                                      child: Text(posts[index].isHide
-                                          ? "Hiện bài viết"
-                                          : 'Ẩn bài viết'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding:
-                                EdgeInsets.only(left: 12, top: 10, bottom: 8),
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              post.content,
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ),
-                          (post.imageFileUrl != null &&
-                                  post.imageFileUrl.isNotEmpty)
-                              ? GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _isExpanded = !_isExpanded;
-                                    });
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: Duration(milliseconds: 300),
-                                    width: screenWidth,
-                                    height: _isExpanded
-                                        ? MediaQuery.of(context).size.height
-                                        : 350,
-                                    child: Image.network(
-                                      post.imageFileUrl,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                )
-                              : Container(),
-                          SizedBox(height: 4),
-                          Row(
-                            children: [
-                              SizedBox(width: 8),
-                              IconButton(
-                                icon: Icon(
-                                  post.initialLikes
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: post.initialLikes ? Colors.red : null,
-                                ),
-                                onPressed: () {
-                                  bool isLike = posts[index].initialLikes;
-                                  int likes = posts[index].likes;
-                                  if (isLike) {
-                                    isLike = false;
-                                    likes = likes - 1;
-                                    setState(() {});
-                                  } else {
-                                    isLike = true;
-                                    likes = likes + 1;
-                                    setState(() {});
-                                  }
-                                  updateLikesInFirestore(index, isLike,
-                                      posts[index].postId, likes);
-                                  setState(() {});
-                                  _getPosts();
-                                },
-                              ),
-                              Text('${post.likes} Thích'),
-                              SizedBox(
-                                width: 20,
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.comment),
-                                onPressed: () {
-                                  showComments(index);
-                                },
-                              ),
-                              Text('${post.comments.length} Bình luận'),
-                            ],
-                          ),
-                          SizedBox(height: 12),
-                        ]);
+
+                  if (post.isHide) {
+                    return HiddenPostBanner(
+                      onRestore: () {
+                        _togglePostVisibility(index);
+                      },
+                    );
+                  }
+
+                  return ArticlePostCard(
+                    post: post,
+                    isExpanded: _isExpanded,
+                    screenWidth: screenWidth,
+                    onToggleImageSize: _toggleImageSize,
+                    onLike: () {
+                      _togglePostLike(index);
+                    },
+                    onComment: () {
+                      showComments(index);
+                    },
+                    onMenuSelected: (value) {
+                      _handlePostMenuAction(index, value);
+                    },
+                  );
                 },
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
-
-  void showSearchBar() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Tìm kiếm'),
-          content: TextField(
-            onChanged: (value) {
-              setState(() {
-                searchText = value;
-              });
-            },
-            decoration: InputDecoration(
-              hintText: 'Nhập từ khóa',
-              border: InputBorder.none,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  isSearchActivated = false;
-                });
-                Navigator.of(context).pop();
-              },
-              child: Text('Đăng'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class Post {
-  late String postId;
-  late String avatarUrl;
-  late String authorName;
-  late String content;
-  late String imageFileUrl;
-  late int likes;
-  late bool initialLikes;
-  late List<Comment> comments;
-  late int timestamp;
-  late bool isHide;
-
-  Post({
-    required this.isHide,
-    required this.postId,
-    required this.avatarUrl,
-    required this.authorName,
-    required this.content,
-    required this.imageFileUrl,
-    this.likes = 0,
-    this.initialLikes = false,
-    this.comments = const [],
-    required this.timestamp,
-  });
-}
-
-class Comment {
-  late String authorName;
-  late String text;
-
-  Comment({
-    required this.authorName,
-    required this.text,
-  });
-}
-
-String formatTimestamp(int timestamp) {
-  DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
-  // Định dạng thời gian ở đây (ví dụ: "dd/MM/yyyy HH:mm")
-  String formattedTime =
-      "${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}";
-  return formattedTime;
 }

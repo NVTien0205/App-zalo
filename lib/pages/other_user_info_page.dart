@@ -76,6 +76,7 @@ class _OtherUserScreenState extends State<OtherUserScreen> {
       'friendList': FieldValue.arrayRemove([widget.userModel.uid]),
     });
 
+    if (!mounted) return;
     setState(() {
       areFriends = false;
     });
@@ -152,12 +153,14 @@ class _OtherUserScreenState extends State<OtherUserScreen> {
     _loadUserData();
     // Kiểm tra nếu lời mời kết bạn đã gửi chưa
     checkFriendRequestExists().then((exists) {
+      if (!mounted) return;
       setState(() {
         isRequestSent = exists;
       });
     });
     // Kiểm tra xem người dùng đã là bạn hay chưa
     areUsersFriends().then((friends) {
+      if (!mounted) return;
       setState(() {
         areFriends = friends;
       });
@@ -165,6 +168,7 @@ class _OtherUserScreenState extends State<OtherUserScreen> {
   }
 
   Future<void> _loadUserData() async {
+    if (!mounted) return;
     setState(() {
       _fullName = widget.targetUser.fullname;
       _profileImageUrl = widget.targetUser.profilepicture;

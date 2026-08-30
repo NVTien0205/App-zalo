@@ -15,12 +15,12 @@ class FriendListScreen extends StatefulWidget {
 }
 
 class _FriendListScreenState extends State<FriendListScreen> {
-  late List<UserModel> friendList;
+  List<UserModel> friendList = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    friendList = [];
     fetchFriendList();
   }
 
@@ -32,8 +32,9 @@ class _FriendListScreenState extends State<FriendListScreen> {
               .doc(widget.userModel.uid)
               .get();
 
-      List<dynamic> friendUids = documentSnapshot['friendList'] ?? [];
+      if (!mounted) return;
 
+      List<dynamic> friendUids = documentSnapshot.data()?['friendList'] ?? [];
       List<UserModel> friends = [];
 
       for (String friendUid in friendUids) {
@@ -43,16 +44,24 @@ class _FriendListScreenState extends State<FriendListScreen> {
                 .doc(friendUid)
                 .get();
 
-        if (friendSnapshot.exists) {
+        if (friendSnapshot.exists && friendSnapshot.data() != null) {
           UserModel friend = UserModel.fromMap(friendSnapshot.data()!);
           friends.add(friend);
         }
       }
 
+      if (!mounted) return;
+
       setState(() {
         friendList = friends;
+        isLoading = false;
       });
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
       print('Error fetching friend list: $e');
     }
   }
@@ -64,46 +73,55 @@ class _FriendListScreenState extends State<FriendListScreen> {
         title: const Text('Danh sách bạn bè'),
         automaticallyImplyLeading: false,
       ),
-      body: friendList.isNotEmpty
-          ? ListView.builder(
-              itemCount: friendList.length,
-              itemBuilder: (context, index) {
-                UserModel friend = friendList[index];
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(friend.profilepicture!),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OtherUserScreen(
-                          targetUser: friend,
-                          userModel: widget.userModel,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : friendList.isNotEmpty
+              ? RefreshIndicator(
+                  onRefresh: fetchFriendList,
+                  child: ListView.builder(
+                    itemCount: friendList.length,
+                    itemBuilder: (context, index) {
+                      UserModel friend = friendList[index];
+                      final hasAvatar = friend.profilepicture != null &&
+                          friend.profilepicture!.isNotEmpty;
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage:
+                              hasAvatar ? NetworkImage(friend.profilepicture!) : null,
+                          child: !hasAvatar ? const Icon(Icons.person) : null,
                         ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OtherUserScreen(
+                                targetUser: friend,
+                                userModel: widget.userModel,
+                              ),
+                            ),
+                          );
+                        },
+                        title: Text(friend.fullname ?? 'Người dùng'),
+                      );
+                    },
+                  ),
+                )
+              : const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Bạn không có bạn bè.",
+                        style: TextStyle(fontSize: 18),
                       ),
-                    );
-                  },
-                  title: Text(friend.fullname!),
-                );
-              },
-            )
-          : const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Bạn không có bạn bè.",
-                    style: TextStyle(fontSize: 18),
+                      SizedBox(height: 10),
+                      Text(
+                        "Hãy bắt đầu kết bạn nào!",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Hãy bắt đầu kết bạn nào!",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 }

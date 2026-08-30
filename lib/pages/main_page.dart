@@ -1,7 +1,7 @@
 // ignore_for_file: file_names, library_private_types_in_public_api, prefer_const_constructors, use_key_in_widget_constructors, use_build_context_synchronously
 
+import 'package:chat_app/features/articles/views/articles_view.dart';
 import 'package:chat_app/models/user_model.dart';
-import 'package:chat_app/pages/articles_page.dart';
 import 'package:chat_app/pages/chat_page.dart';
 import 'package:chat_app/pages/friend_list_page.dart';
 import 'package:chat_app/pages/home_page.dart';
@@ -40,7 +40,7 @@ class _MainPageState extends State<MainPage> {
         firebaseUser: widget.firebaseUser,
       ),
       FriendListScreen(userModel: widget.userModel),
-      History(userModel: widget.userModel),
+      ArticlesView(userModel: widget.userModel),
       FriendRequestScreen(currentUser: widget.userModel),
       ProfilePage(userModel: widget.userModel),
     ];
@@ -80,7 +80,7 @@ class _MainPageState extends State<MainPage> {
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.18),
+            color: Colors.white.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Row(

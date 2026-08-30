@@ -3,6 +3,7 @@
 import 'dart:io';
 
 class Post {
+  late String postId;
   late String avatarUrl;
   late String authorName;
   late String content;
@@ -11,8 +12,11 @@ class Post {
   late bool initialLikes;
   late List<Comment> comments;
   late int timestamp;
+  late bool isHide;
 
   Post({
+    required this.isHide,
+    required this.postId,
     required this.avatarUrl,
     required this.authorName,
     required this.content,
@@ -25,11 +29,19 @@ class Post {
 }
 
 class Comment {
-  final String authorName;
-  final String text;
+  late String authorName;
+  late String text;
 
   Comment({
     required this.authorName,
     required this.text,
   });
+}
+
+String formatTimestamp(int timestamp) {
+  DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+  // Định dạng thời gian ở đây (ví dụ: "dd/MM/yyyy HH:mm")
+  String formattedTime =
+      "${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}";
+  return formattedTime;
 }

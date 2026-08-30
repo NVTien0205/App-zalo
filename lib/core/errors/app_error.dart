@@ -5,7 +5,7 @@ class AppError {
   final String message;
   final String code;
 
-  const AppError({required this.message, required this.code});
+  const AppError({required this.message, this.code = 'unknown'});
 
   static const invalidEmail = AppError(
     code: 'invalid-email',
