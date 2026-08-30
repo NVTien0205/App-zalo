@@ -17,12 +17,14 @@ class FirebaseAuthService implements AuthService {
   Future<Result<UserCredential>> signUp({
     required String email,
     required String password,
+    required String fullname,
   }) async {
     try {
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      await credential.user?.updateDisplayName(fullname);
       return Success(credential);
     } on FirebaseAuthException catch (ex) {
       return Failure(AuthErrorMapper.map(ex.code));
@@ -84,6 +86,23 @@ class FirebaseAuthService implements AuthService {
   Future<Result<void>> resetPassword({required String email}) async {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
+      return const Success(null);
+    } on FirebaseAuthException catch (ex) {
+      return Failure(AuthErrorMapper.map(ex.code));
+    }
+  }
+
+  @override
+  Future<Result<void>> updateDisplayName({required String newName}) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        return const Failure(AppError(
+          code: 'no-current-user',
+          message: 'Không tìm thấy phiên đăng nhập hiện tại.',
+        ));
+      }
+      await user.updateDisplayName(newName);
       return const Success(null);
     } on FirebaseAuthException catch (ex) {
       return Failure(AuthErrorMapper.map(ex.code));

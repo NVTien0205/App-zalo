@@ -6,6 +6,7 @@ class RegisterState {
   final String email;
   final String password;
   final String confirmPassword;
+  final String fullName;
   final AppError? error;
 
   const RegisterState({
@@ -13,6 +14,7 @@ class RegisterState {
     this.email = '',
     this.password = '',
     this.confirmPassword = '',
+    this.fullName ='',
     this.error
   });
 
@@ -21,6 +23,7 @@ class RegisterState {
     String? email,
     String? password,
     String? confirmPassword,
+    String? fullName,
     AppError? error
   }) {
     return RegisterState(
@@ -28,6 +31,7 @@ class RegisterState {
       email : email ?? this.email,
       password : password ?? this.password,
       confirmPassword : confirmPassword ?? this.confirmPassword,
+      fullName: fullName ?? this.fullName,
       error: error
     );
   }
