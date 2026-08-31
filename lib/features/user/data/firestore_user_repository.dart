@@ -9,8 +9,10 @@ class FirestoreUserRepository implements UserRepository {
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<Result<void>> updateFullName(
-      {required String uid, required String newFullName}) async {
+  Future<Result<void>> updateFullName({
+    required String uid, 
+    required String newFullName
+  }) async {
     try {
       await _firestore
           .collection('users')
@@ -23,4 +25,23 @@ class FirestoreUserRepository implements UserRepository {
           message: ex.message ?? 'Không thể cập nhật tên, vui lòng thử lại.'));
     }
   }
+
+  // @override
+  // Future<Result<void>> updateDisplayName({
+  //   required String uid,
+  //   required String newDisplayName,
+  // }) async {
+  //   try {
+  //     await _firestore
+  //       .collection('users')
+  //       .doc(uid)
+  //       .update({'fullname': newDisplayName});
+  //     return const Success(null);
+  //   } on FirebaseException catch (ex) {
+  //     return Failure(AppError(
+  //       code: ex.code,
+  //       message: ex.message ?? 'Không thể cập nhật tên hiển thị, vui lòng thử lại.',
+  //     ));
+  //   }
+  // }
 }

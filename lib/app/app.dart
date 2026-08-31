@@ -1,3 +1,5 @@
+import 'package:chat_app/features/user/data/firestore_user_repository.dart';
+import 'package:chat_app/features/user/domain/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,6 +13,10 @@ import 'package:chat_app/app/routes.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {
   return FirebaseAuth.instance.authStateChanges();
+});
+
+final userRepositoryProvider = Provider<UserRepository>((ref) {
+  return FirestoreUserRepository();
 });
 
 final databaseServiceProvider = Provider((ref) => FirebaseHelper());

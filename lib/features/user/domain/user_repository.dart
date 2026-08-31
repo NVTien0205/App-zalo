@@ -6,5 +6,9 @@ abstract interface class UserRepository {
     required String uid,
     required String newFullName,
   });
+  // Future<Result<void>> updateDisplayName({
+  //   required String uid,
+  //   required String newDisplayName,
+  // });
 }
 

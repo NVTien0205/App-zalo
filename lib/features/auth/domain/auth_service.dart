@@ -5,7 +5,7 @@ abstract interface class AuthService {
   Future<Result<UserCredential>> signUp({
     required String email,
     required String password,
-    required String fullname,
+    required String fullName,
   });
 
   Future<Result<UserCredential>> signIn({

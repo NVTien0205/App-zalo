@@ -17,14 +17,14 @@ class FirebaseAuthService implements AuthService {
   Future<Result<UserCredential>> signUp({
     required String email,
     required String password,
-    required String fullname,
+    required String fullName,
   }) async {
     try {
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      await credential.user?.updateDisplayName(fullname);
+      await credential.user?.updateDisplayName(fullName);
       return Success(credential);
     } on FirebaseAuthException catch (ex) {
       return Failure(AuthErrorMapper.map(ex.code));
