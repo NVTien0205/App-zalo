@@ -10,11 +10,11 @@ class ChangePasswordViewModel extends Notifier<ChangePasswordState>{
   AuthService get _authService => ref.read(authServiceProvider);
 
   void setCurrentPassword(String currentPassword) {
-
+    state = state.copyWith(currentPassword: currentPassword, error: null);
   }
 
   void setNewPassword(String newPassword) {
-
+    state = state.copyWith(newPassword: newPassword, error: null);
   }
 
   void changePassword() async {

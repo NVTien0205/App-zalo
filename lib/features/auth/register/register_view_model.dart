@@ -47,6 +47,6 @@ class RegisterViewModel extends Notifier<RegisterState>{
     );
   }
 }
-  final resisterViewModelProvider = NotifierProvider.autoDispose
+  final registerViewModelProvider = NotifierProvider.autoDispose
   <RegisterViewModel, RegisterState> (
     RegisterViewModel.new);
