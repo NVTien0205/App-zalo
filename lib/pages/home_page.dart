@@ -1,7 +1,7 @@
 // ignore_for_file: file_names
 
 import 'dart:ui';
-import 'package:chat_app/pages/login_page.dart';
+import 'package:chat_app/features/auth/login/login_view.dart';
 import 'package:chat_app/pages/register_page.dart';
 import 'package:flutter/material.dart';
 
@@ -57,7 +57,7 @@ class HomePage extends StatelessWidget {
                           onPressed: () {
                             Navigator.push(context,
                                 MaterialPageRoute(builder: (context) {
-                              return LoginPage();
+                              return const LoginView();
                             }));
                           },
                         ),
