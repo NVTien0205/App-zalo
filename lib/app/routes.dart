@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:chat_app/features/auth/login/login_view.dart';
-import 'package:chat_app/pages/register_page.dart';
+import 'package:chat_app/features/auth/register/register_view.dart';
 
 /// Route table cho các trang KHÔNG cần tham số bắt buộc lúc khởi tạo.
 /// Các trang cần params (ConfirmAccount, MainPage, ChatRoomPage, OtherUserScreen...)
@@ -15,6 +15,6 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
         login: (context) => const LoginView(),
-        register: (context) => RegisterPage(),
+        register: (context) => const RegisterView(),
       };
 }

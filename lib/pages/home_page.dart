@@ -1,9 +1,10 @@
 // ignore_for_file: file_names
 
 import 'dart:ui';
-import 'package:chat_app/features/auth/login/login_view.dart';
-import 'package:chat_app/pages/register_page.dart';
 import 'package:flutter/material.dart';
+import 'package:chat_app/features/auth/login/login_view.dart';
+import 'package:chat_app/features/auth/register/register_view.dart';
+
 
 // ignore: use_key_in_widget_constructors
 class HomePage extends StatelessWidget {
@@ -78,7 +79,7 @@ class HomePage extends StatelessWidget {
                           onPressed: () {
                             Navigator.push(context,
                                 MaterialPageRoute(builder: (context) {
-                              return RegisterPage();
+                              return const RegisterView();
                             }));
                           },
                         ),
