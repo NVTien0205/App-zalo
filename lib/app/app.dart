@@ -1,5 +1,3 @@
-import 'package:chat_app/features/user/data/firestore_user_repository.dart';
-import 'package:chat_app/features/user/domain/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +8,9 @@ import 'package:chat_app/pages/main_page.dart';
 import 'package:chat_app/features/auth/domain/auth_service.dart';
 import 'package:chat_app/features/auth/data/firebase_auth_service.dart';
 import 'package:chat_app/app/routes.dart';
+import 'package:chat_app/core/services/image_service.dart';
+import 'package:chat_app/features/user/data/firestore_user_repository.dart';
+import 'package:chat_app/features/user/domain/user_repository.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {
   return FirebaseAuth.instance.authStateChanges();
@@ -20,6 +21,8 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
 });
 
 final databaseServiceProvider = Provider((ref) => FirebaseHelper());
+
+final imageServiceProvider = Provider((ref) => ImageService());
 
 /// Fetch UserModel từ Firestore theo uid — tách riêng theo family để
 /// Riverpod tự cache/rebuild đúng khi uid đổi.

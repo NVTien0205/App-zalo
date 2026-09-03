@@ -26,22 +26,22 @@ class FirestoreUserRepository implements UserRepository {
     }
   }
 
-  // @override
-  // Future<Result<void>> updateDisplayName({
-  //   required String uid,
-  //   required String newDisplayName,
-  // }) async {
-  //   try {
-  //     await _firestore
-  //       .collection('users')
-  //       .doc(uid)
-  //       .update({'fullname': newDisplayName});
-  //     return const Success(null);
-  //   } on FirebaseException catch (ex) {
-  //     return Failure(AppError(
-  //       code: ex.code,
-  //       message: ex.message ?? 'Không thể cập nhật tên hiển thị, vui lòng thử lại.',
-  //     ));
-  //   }
-  // }
+  @override
+  Future<Result<void>> updateProfilePicture({
+    required String uid,
+    required String profilePictureUrl,
+  }) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .update({'profilepicture': profilePictureUrl});
+      return const Success(null);
+    } on FirebaseException catch (ex) {
+      return Failure(AppError(
+        code: ex.code,
+        message: ex.message ?? 'Không thể cập nhật ảnh đại diện, vui lòng thử lại.',
+      ));
+    }
+  }
 }
