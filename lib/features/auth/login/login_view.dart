@@ -8,7 +8,7 @@ import 'package:chat_app/core/widgets/app_snack_bar.dart';
 import 'package:chat_app/features/auth/domain/auth_status.dart';
 import 'package:chat_app/features/auth/login/login_view_model.dart';
 import 'package:chat_app/pages/main_page.dart';
-import 'package:chat_app/pages/confirm_account_page.dart';
+import 'package:chat_app/features/profile_setup/profile_setup_view.dart';
 import 'package:chat_app/models/user_model.dart';
 
 class LoginView extends ConsumerStatefulWidget {
@@ -56,18 +56,12 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     if (userModel == null) {
       showAppSnackBar(context, 'Tài khoản đã tồn tại nhưng chưa có hồ sơ người dùng.');
-      final incompleteUser = UserModel(
-        uid: firebaseUser.uid,
-        email: firebaseUser.email ?? '',
-        fullname: '',
-        friendList: [],
-      );
       await Future<void>.delayed(const Duration(milliseconds: 250));
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => ConfirmAccount(firebaseUser: firebaseUser, userModel: incompleteUser),
+          builder: (_) => ProfileSetupView(uid: firebaseUser.uid),
         ),
       );
       return;
