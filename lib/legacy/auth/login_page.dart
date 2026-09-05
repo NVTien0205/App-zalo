@@ -5,7 +5,7 @@ import 'package:chat_app/components/password_text_field.dart';
 import 'package:chat_app/core/utils/validators.dart';
 import 'package:chat_app/core/widgets/app_snack_bar.dart';
 import 'package:chat_app/models/user_model.dart';
-import 'package:chat_app/pages/confirm_account_page.dart';
+import 'package:chat_app/legacy/auth/confirm_account_page.dart';
 import 'package:chat_app/pages/main_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
