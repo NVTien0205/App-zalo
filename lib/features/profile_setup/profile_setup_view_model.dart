@@ -72,18 +72,24 @@ class ProfileSetupViewModel extends Notifier<ProfileSetupState> {
       profilePictureUrl: avatarUrl,
     );
 
-    avatarResult.fold(
-      onSuccess: (_) {
-        // Fetch lại UserModel mới nhất từ Firestore + User từ Auth để View
-        // có đủ dữ liệu điều hướng vào MainPage (cần cả 2 tham số bắt buộc).
-        final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (avatarResult.isFailure) {
+        avatarResult.fold(
+          onSuccess: (_) {},
+          onFailure: (err) {
+            state = state.copyWith(status: AuthStatus.failure, error: err);
+          },
+        );
+        return;
+      }
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      final userModel = await ref.read(databaseServiceProvider).getUserModelById(uid);
 
-        state = state.copyWith(status: AuthStatus.success, error: null, firebaseUser: firebaseUser);
-      },
-      onFailure: (err) {
-        state = state.copyWith(status: AuthStatus.failure, error: err);
-      },
-    );
+      state = state.copyWith(
+        status: AuthStatus.success,
+        error: null,
+        firebaseUser: firebaseUser,
+        userModel: userModel,
+      );
   }
 }
 

@@ -87,15 +87,15 @@ class _ProfileSetupViewState extends ConsumerState<ProfileSetupView> {
         Future<void>.delayed(const Duration(milliseconds: 250), () {
           if (!mounted) return;
           if (!context.mounted) return;
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
             builder: (_) => MainPage(
                 firebaseUser: next.firebaseUser!,
                 userModel: next.userModel!,
               ),
-            )
-            // (route) => false,
+            ),
+            (route) => false,
           );
         });
       }
